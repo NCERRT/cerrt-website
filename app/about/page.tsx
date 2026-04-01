@@ -313,7 +313,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
-                value: "2018",
+                value: "2014",
                 label: "Established",
                 subtitle: "Year CERRT was founded",
               },
@@ -328,7 +328,7 @@ export default function AboutPage() {
                 subtitle: "Successfully resolved cases",
               },
               {
-                value: "200+",
+                value: "10+",
                 label: "Partner Organizations",
                 subtitle: "Trusted collaborators",
               },

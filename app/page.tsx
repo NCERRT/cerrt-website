@@ -104,9 +104,8 @@ export default function Home() {
                 Emergency Readiness and Response Team
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                NITDA&apos;s CERRT is Nigeria’s national computer emergency
-                response team, providing 24/7 cybersecurity incident response,
-                threat intelligence, and security awareness to protect Nigeria’s
+                Providing 24/7 cybersecurity incident response, threat
+                intelligence, and security awareness to protect Nigeria’s
                 digital infrastructure and citizens.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -297,7 +296,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-serif">
-              Protecting Nigeria Since 2018
+              Protecting Nigeria Since 2014
             </h2>
             <p className="text-primary-foreground/80 text-lg">
               Our commitment to cybersecurity excellence in numbers
@@ -305,10 +304,10 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: "2018", label: "Established" },
+              { value: "2014", label: "Established" },
               { value: "24/7", label: "Monitoring" },
               { value: "1500+", label: "Incidents Handled" },
-              { value: "200+", label: "Partner Organizations" },
+              { value: "10+", label: "Partner Organizations" },
             ].map((stat, index) => (
               <div key={index} className="text-center group cursor-pointer">
                 <div className="relative inline-block mb-4">
@@ -338,12 +337,11 @@ export default function Home() {
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4 font-serif">
-              Advisories & Downloads
+              Advisories
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Access our comprehensive library of cybersecurity resources,
-              guidelines, and tools designed specifically for Nigerian
-              organizations.
+              guidelines.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
