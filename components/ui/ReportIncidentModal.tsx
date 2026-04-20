@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, CancelCircleIcon } from "@hugeicons/core-free-icons";
 
@@ -13,13 +15,15 @@ export default function ReportIncidentModal({
   isOpen,
   onClose,
 }: ReportIncidentModalProps) {
+  const submitReport = useMutation(api.incidentReports.submit);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     organization: "",
     incidentType: "security-breach",
-    severity: "high",
+    severity: "high" as "critical" | "high" | "medium" | "low",
     description: "",
   });
 
@@ -42,11 +46,19 @@ export default function ReportIncidentModal({
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
-    // Simulate form submission (no API integration yet)
-    setTimeout(() => {
-      console.log("Incident reported:", formData);
-      setIsSubmitting(false);
+    try {
+      await submitReport({
+        type: formData.incidentType,
+        description: formData.description,
+        contactName: formData.name,
+        contactEmail: formData.email,
+        contactPhone: formData.phone,
+        organization: formData.organization,
+        severity: formData.severity,
+      });
+
       setSubmitStatus("success");
+
       // Reset form after 2 seconds
       setTimeout(() => {
         setFormData({
@@ -61,7 +73,12 @@ export default function ReportIncidentModal({
         setSubmitStatus("idle");
         onClose();
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;

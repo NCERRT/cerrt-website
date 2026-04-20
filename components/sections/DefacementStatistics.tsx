@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   BarChart,
   Bar,
@@ -11,101 +13,61 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export default function DefacementStatistics() {
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const statsData = useQuery(api.defacementStats.list, {});
+  const years = useQuery(api.defacementStats.getYears, {});
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  const years = [2026, 2025, 2024, 2023, 2022, 2021];
+  // Transform Convex data to chart format
+  const getYearData = (year: number) => {
+    if (!statsData || typeof statsData !== "object" || Array.isArray(statsData)) {
+      return MONTHS.map((month) => ({ month, incidents: 0 }));
+    }
 
-  // Sample data - replace with actual data from your backend/CMS
-  const statisticsData = {
-    2026: [
-      { month: "January", incidents: 9 },
-      { month: "February", incidents: 4 },
-      { month: "March", incidents: 0 },
-      { month: "April", incidents: 0 },
-      { month: "May", incidents: 0 },
-      { month: "June", incidents: 0 },
-      { month: "July", incidents: 0 },
-      { month: "August", incidents: 0 },
-      { month: "September", incidents: 0 },
-      { month: "October", incidents: 0 },
-      { month: "November", incidents: 0 },
-      { month: "December", incidents: 0 },
-    ],
-    2025: [
-      { month: "January", incidents: 12 },
-      { month: "February", incidents: 8 },
-      { month: "March", incidents: 15 },
-      { month: "April", incidents: 6 },
-      { month: "May", incidents: 10 },
-      { month: "June", incidents: 7 },
-      { month: "July", incidents: 9 },
-      { month: "August", incidents: 11 },
-      { month: "September", incidents: 5 },
-      { month: "October", incidents: 8 },
-      { month: "November", incidents: 14 },
-      { month: "December", incidents: 6 },
-    ],
-    2024: [
-      { month: "January", incidents: 10 },
-      { month: "February", incidents: 12 },
-      { month: "March", incidents: 8 },
-      { month: "April", incidents: 15 },
-      { month: "May", incidents: 7 },
-      { month: "June", incidents: 11 },
-      { month: "July", incidents: 9 },
-      { month: "August", incidents: 13 },
-      { month: "September", incidents: 6 },
-      { month: "October", incidents: 10 },
-      { month: "November", incidents: 8 },
-      { month: "December", incidents: 5 },
-    ],
-    2023: [
-      { month: "January", incidents: 14 },
-      { month: "February", incidents: 10 },
-      { month: "March", incidents: 12 },
-      { month: "April", incidents: 9 },
-      { month: "May", incidents: 11 },
-      { month: "June", incidents: 8 },
-      { month: "July", incidents: 13 },
-      { month: "August", incidents: 7 },
-      { month: "September", incidents: 10 },
-      { month: "October", incidents: 12 },
-      { month: "November", incidents: 9 },
-      { month: "December", incidents: 11 },
-    ],
-    2022: [
-      { month: "January", incidents: 16 },
-      { month: "February", incidents: 13 },
-      { month: "March", incidents: 11 },
-      { month: "April", incidents: 14 },
-      { month: "May", incidents: 9 },
-      { month: "June", incidents: 12 },
-      { month: "July", incidents: 10 },
-      { month: "August", incidents: 15 },
-      { month: "September", incidents: 8 },
-      { month: "October", incidents: 11 },
-      { month: "November", incidents: 13 },
-      { month: "December", incidents: 7 },
-    ],
-    2021: [
-      { month: "January", incidents: 18 },
-      { month: "February", incidents: 15 },
-      { month: "March", incidents: 13 },
-      { month: "April", incidents: 16 },
-      { month: "May", incidents: 12 },
-      { month: "June", incidents: 14 },
-      { month: "July", incidents: 11 },
-      { month: "August", incidents: 17 },
-      { month: "September", incidents: 10 },
-      { month: "October", incidents: 13 },
-      { month: "November", incidents: 15 },
-      { month: "December", incidents: 9 },
-    ],
+    const yearStats = (statsData as Record<number, Array<{ month: number; incidents: number }>>)[year] || [];
+
+    return MONTHS.map((month, index) => {
+      const stat = yearStats.find((s) => s.month === index + 1);
+      return {
+        month,
+        incidents: stat?.incidents || 0,
+      };
+    });
   };
 
-  const currentData =
-    statisticsData[selectedYear as keyof typeof statisticsData];
+  const currentData = getYearData(selectedYear);
+  const displayYears = years || [new Date().getFullYear()];
+
+  // Loading state
+  if (!statsData || !years) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-8 font-serif text-primary">
+              Defacement Statistics
+            </h2>
+            <p className="text-muted-foreground">Loading statistics...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-white">
@@ -117,7 +79,7 @@ export default function DefacementStatistics() {
 
           {/* Year Tabs */}
           <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {years.map((year) => (
+            {displayYears.map((year) => (
               <button
                 key={year}
                 onClick={() => setSelectedYear(year)}
