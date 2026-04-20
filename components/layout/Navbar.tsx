@@ -21,13 +21,30 @@ export default function Navbar() {
   ];
 
   const advisoryLinks = [
-    { href: "/advisories", label: "General Advisories", description: "Security updates for all" },
-    { href: "/advisories/individuals", label: "For Individuals", description: "Personal security guidance" },
-    { href: "/advisories/organizations", label: "For Organizations", description: "Enterprise security" },
-    { href: "/advisories/kids", label: "For Kids", description: "Child-friendly safety tips" },
+    {
+      href: "/advisories",
+      label: "General Advisories",
+      description: "Security updates for all",
+    },
+    {
+      href: "/advisories/individuals",
+      label: "For Individuals",
+      description: "Personal security guidance",
+    },
+    {
+      href: "/advisories/organizations",
+      label: "For Organizations",
+      description: "Enterprise security",
+    },
+    {
+      href: "/advisories/kids",
+      label: "For Kids",
+      description: "Child-friendly safety tips",
+    },
   ];
 
-  const isAdvisoriesActive = pathname.startsWith("/advisories") || pathname === "/kids-advisory";
+  const isAdvisoriesActive =
+    pathname.startsWith("/advisories") || pathname === "/kids-advisory";
 
   return (
     <>
@@ -39,19 +56,31 @@ export default function Navbar() {
               href="/"
               className="flex cursor-pointer items-center gap-3 group py-3"
             >
-              <div className="relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Image
-                  src={"/nitda-logo.png"}
-                  alt="NITDA Logo"
-                  width={50}
-                  height={50}
-                  className="relative z-10"
-                />
-                <div className="absolute inset-0 bg-primary/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex items-center gap-3">
+                <div className="relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Image
+                    src={"/nitda-logo.png"}
+                    alt="NITDA Logo"
+                    width={50}
+                    height={50}
+                    className="relative z-10"
+                  />
+                  <div className="absolute inset-0 bg-primary/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+                <div className="relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Image
+                    src={"/cerrt-logo.png"}
+                    alt="CERRT Logo"
+                    width={120}
+                    height={50}
+                    className="relative z-10"
+                  />
+                  <div className="absolute inset-0 bg-primary/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
               </div>
-              <span className="text-2xl font-bold text-primary group-hover:text-primary-light transition-colors">
+              {/* <span className="text-2xl font-bold text-primary group-hover:text-primary-light transition-colors hidden sm:block">
                 NITDA CERRT
-              </span>
+              </span> */}
             </Link>
 
             {/* Desktop Navigation */}

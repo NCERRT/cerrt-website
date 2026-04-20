@@ -23,7 +23,6 @@ export const metadata: Metadata = {
 };
 
 export default function KidsAdvisoryPage() {
-  // Static kids advisory data - will be replaced with Sanity CMS later
   const advisories = [
     {
       id: 1,
@@ -99,12 +98,12 @@ export default function KidsAdvisoryPage() {
     },
   ];
 
-  // Gallery images - placeholder data
+  // Gallery images - CERRT awareness materials
   const galleryImages = [
-    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",
-    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
-    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80",
-    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",
+    "/hero-images/NITDA25-CHD-AWARENESS-1.jpg",
+    "/hero-images/NITDA25-CHD-AWARENESS-2.jpg",
+    "/hero-images/NITDA25-CHD-AWARENESS-4.jpg",
+    "/hero-images/NITDA25-CHD-AWARENESS-6.jpg",
   ];
 
   return (
@@ -205,7 +204,7 @@ export default function KidsAdvisoryPage() {
           </div>
 
           <div className="max-w-5xl mx-auto">
-            <div className="h-125">
+            <div className="h-150 md:h-175 lg:h-200 w-auto">
               <Carousel
                 images={galleryImages}
                 autoPlay={true}

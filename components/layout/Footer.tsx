@@ -68,16 +68,22 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* CERRT Info */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className=" flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3">
                 <Image
                   src={"/nitda-logo.png"}
+                  alt="NITDA Logo"
+                  width={50}
+                  height={50}
+                />
+                <Image
+                  src={"/cerrt-logo.png"}
                   alt="CERRT Logo"
-                  width={64}
-                  height={64}
-                />{" "}
+                  width={120}
+                  height={50}
+                />
               </div>
-              <span className="text-xl font-bold">NITDA CERRT</span>
+              {/* <span className="text-xl font-bold">NITDA CERRT</span> */}
             </div>
             <p className="text-primary-foreground/80 text-sm leading-relaxed mb-6">
               Nigeria&apos;s Computer Emergency Readiness and Response Team,

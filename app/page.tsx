@@ -66,10 +66,10 @@ export default function Home() {
   ];
 
   const heroImages = [
-    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80",
-    "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80",
-    "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
-    "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80",
+    "/hero-images/NITDA25-CHD-AWARENESS-1.jpg",
+    "/hero-images/NITDA25-CHD-AWARENESS-2.jpg",
+    "/hero-images/NITDA25-CHD-AWARENESS-4.jpg",
+    "/hero-images/NITDA25-CHD-AWARENESS-6.jpg",
   ];
 
   const formatDate = (dateString: string) => {
