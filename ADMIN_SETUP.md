@@ -17,11 +17,6 @@ npx convex run auth:signUp '{"email":"admin@cerrt.gov.ng","password":"<strong-pa
 - Maximum 128 characters
 - Must not appear in known data breaches (HIBP check)
 
-**Example:**
-```bash
-npx convex run auth:signUp '{"email":"john@cerrt.gov.ng","password":"My$ecureP@ss2026!","name":"John Doe"}'
-```
-
 The command will return the new user's ID and a session ID.
 
 ### Option 2: Via Convex Dashboard
