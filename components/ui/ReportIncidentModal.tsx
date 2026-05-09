@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, CancelCircleIcon } from "@hugeicons/core-free-icons";
+import { incidentReportSchema, formatZodError } from "@/lib/schemas";
 
 interface ReportIncidentModalProps {
   isOpen: boolean;
@@ -13,13 +16,15 @@ export default function ReportIncidentModal({
   isOpen,
   onClose,
 }: ReportIncidentModalProps) {
+  const submitReport = useMutation(api.incidentReports.submit);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     organization: "",
     incidentType: "security-breach",
-    severity: "high",
+    severity: "high" as "critical" | "high" | "medium" | "low",
     description: "",
   });
 
@@ -27,6 +32,7 @@ export default function ReportIncidentModal({
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">(
     "idle"
   );
+  const [validationError, setValidationError] = useState<string>("");
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -39,14 +45,32 @@ export default function ReportIncidentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError("");
+
+    // Validate with Zod before submitting (immediate feedback)
+    const parseResult = incidentReportSchema.safeParse({
+      type: formData.incidentType,
+      description: formData.description,
+      contactName: formData.name,
+      contactEmail: formData.email,
+      contactPhone: formData.phone,
+      organization: formData.organization,
+      severity: formData.severity,
+    });
+
+    if (!parseResult.success) {
+      setValidationError(formatZodError(parseResult.error));
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
-    // Simulate form submission (no API integration yet)
-    setTimeout(() => {
-      console.log("Incident reported:", formData);
-      setIsSubmitting(false);
+    try {
+      await submitReport(parseResult.data);
+
       setSubmitStatus("success");
+
       // Reset form after 2 seconds
       setTimeout(() => {
         setFormData({
@@ -61,7 +85,12 @@ export default function ReportIncidentModal({
         setSubmitStatus("idle");
         onClose();
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -146,6 +175,7 @@ export default function ReportIncidentModal({
                     value={formData.name}
                     onChange={handleChange}
                     required
+                    maxLength={100}
                     className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     placeholder="John Doe"
                   />
@@ -165,6 +195,7 @@ export default function ReportIncidentModal({
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    maxLength={254}
                     className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     placeholder="john@example.com"
                   />
@@ -184,6 +215,7 @@ export default function ReportIncidentModal({
                     value={formData.phone}
                     onChange={handleChange}
                     required
+                    maxLength={30}
                     className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     placeholder="+234 XXX XXX XXXX"
                   />
@@ -203,6 +235,7 @@ export default function ReportIncidentModal({
                     value={formData.organization}
                     onChange={handleChange}
                     required
+                    maxLength={200}
                     className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     placeholder="Your organization"
                   />
@@ -277,13 +310,23 @@ export default function ReportIncidentModal({
                   onChange={handleChange}
                   required
                   rows={6}
+                  maxLength={5000}
                   className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
                   placeholder="Please provide detailed information about the incident including:&#10;- What happened?&#10;- When did it occur?&#10;- What systems/data are affected?&#10;- Current status of the incident&#10;- Any immediate actions already taken"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.description.length}/5000 characters
+                </p>
               </div>
             </div>
 
             {/* Submit Status */}
+            {validationError && (
+              <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-md text-destructive text-sm">
+                ⚠ {validationError}
+              </div>
+            )}
+
             {submitStatus === "success" && (
               <div className="p-4 bg-success/10 border border-success/30 rounded-md text-success text-sm">
                 ✓ Incident reported successfully! Our team will contact you shortly.

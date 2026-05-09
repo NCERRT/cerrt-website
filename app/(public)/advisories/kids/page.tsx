@@ -1,76 +1,27 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  LockPasswordIcon,
-  Alert02Icon,
   UserShield02Icon,
-  SearchVisualIcon,
-  GameController03Icon,
-  GlobeIcon,
   Home01Icon,
   UserMultiple02Icon,
   FavouriteIcon,
   Mouse13Icon,
   Award01Icon,
   ArrowRight01Icon,
+  Download01Icon,
+  Calendar01Icon,
+  IdentificationIcon,
 } from "@hugeicons/core-free-icons";
 import Carousel from "@/components/ui/Carousel";
 
-export const metadata: Metadata = {
-  title: "Kids Advisory | CERRT",
-  description:
-    "Fun and educational cybersecurity resources for children to learn about staying safe online",
-};
-
 export default function KidsAdvisoryPage() {
-  const advisories = [
-    {
-      id: 1,
-      title: "Password Power",
-      description:
-        "Learn how to create strong passwords and keep your accounts safe!",
-      icon: LockPasswordIcon,
-      color: "bg-blue-500",
-    },
-    {
-      id: 2,
-      title: "Stranger Danger Online",
-      description:
-        "Important tips about talking to people you don't know on the internet.",
-      icon: Alert02Icon,
-      color: "bg-yellow-500",
-    },
-    {
-      id: 3,
-      title: "Smart Sharing",
-      description:
-        "What's safe to share online and what should you keep private?",
-      icon: UserShield02Icon,
-      color: "bg-green-500",
-    },
-    {
-      id: 4,
-      title: "Spotting Scams",
-      description:
-        "How to recognize when someone is trying to trick you online.",
-      icon: SearchVisualIcon,
-      color: "bg-purple-500",
-    },
-    {
-      id: 5,
-      title: "Gaming Safety",
-      description: "Stay safe while playing your favorite online games!",
-      icon: GameController03Icon,
-      color: "bg-pink-500",
-    },
-    {
-      id: 6,
-      title: "Social Media Smarts",
-      description: "How to use social media safely and responsibly.",
-      icon: GlobeIcon,
-      color: "bg-indigo-500",
-    },
-  ];
+  const advisories = useQuery(api.advisories.list, { category: "kids" });
+  const allAdvisories = useQuery(api.advisories.list, { category: "kids" });
 
   const safetyTips = [
     {
@@ -98,13 +49,44 @@ export default function KidsAdvisoryPage() {
     },
   ];
 
-  // Gallery images - CERRT awareness materials
-  const galleryImages = [
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "critical":
+        return "bg-destructive text-white";
+      case "high":
+        return "bg-warning text-white";
+      case "medium":
+        return "bg-accent text-white";
+      case "low":
+        return "bg-muted text-muted-foreground";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return new Intl.DateTimeFormat("en-NG", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date);
+  };
+  // Gallery images - Start with static hero images
+  const staticImages = [
     "/hero-images/NITDA25-CHD-AWARENESS-1.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-2.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-4.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-6.jpg",
   ];
+
+  // Get image advisories for gallery
+  const imageAdvisories = allAdvisories?.filter(
+    (advisory) => advisory.fileType === "image" && advisory.fileStorageId
+  ) || [];
+
+  // Combine static images with advisory images (we'll need to get URLs for advisory images)
+  const galleryImages = staticImages;
 
   return (
     <main className="flex flex-col">
@@ -211,6 +193,20 @@ export default function KidsAdvisoryPage() {
                 interval={4000}
               />
             </div>
+
+            {/* Image Advisories Grid */}
+            {imageAdvisories.length > 0 && (
+              <div className="mt-16">
+                <h3 className="text-2xl font-bold text-foreground mb-8 text-center">
+                  Safety Posters & Graphics
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {imageAdvisories.map((advisory) => (
+                    <ImageAdvisoryCard key={advisory._id} advisory={advisory} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -221,57 +217,40 @@ export default function KidsAdvisoryPage() {
           <div className="text-center mb-16">
             <div className="inline-block mb-4">
               <span className="text-primary font-semibold text-sm uppercase tracking-wider bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-                Learning Modules
+                Safety Resources
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4 font-serif">
-              Learn About...
+              Latest Kids Advisories
             </h2>
             <p className="text-xl text-muted-foreground">
-              Click on any card to learn more about staying safe online!
+              Fun and educational cybersecurity resources for kids!
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {advisories.map((advisory, index) => (
-              <div
-                key={advisory.id}
-                className="bg-white border-2 border-border rounded-2xl overflow-hidden hover-lift cursor-pointer group card-interactive animate-slide-in-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div
-                  className={`${advisory.color} p-10 text-center text-white relative overflow-hidden`}
-                >
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300"></div>
-                  <div className="flex justify-center mb-4 relative z-10">
-                    <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-125 transition-transform duration-300">
-                      <HugeiconsIcon
-                        icon={advisory.icon}
-                        size={64}
-                        color="white"
-                      />
-                    </div>
-                  </div>
-                  <h3 className="text-3xl font-bold relative z-10">
-                    {advisory.title}
-                  </h3>
-                </div>
-                <div className="p-8">
-                  <p className="text-muted-foreground mb-6 text-lg leading-relaxed">
-                    {advisory.description}
-                  </p>
-                  <button className="group/btn w-full px-6 py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all inline-flex items-center justify-center gap-2">
-                    Learn More
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      size={20}
-                      color="currentColor"
-                      className="group-hover/btn:translate-x-1 transition-transform"
-                    />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+
+          {!advisories ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading advisories...</p>
+            </div>
+          ) : advisories.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                No kids advisories available yet. Check back soon!
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {advisories.map((advisory, index) => (
+                <KidsAdvisoryCard
+                  key={advisory._id}
+                  advisory={advisory}
+                  index={index}
+                  getSeverityColor={getSeverityColor}
+                  formatDate={formatDate}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -361,5 +340,157 @@ export default function KidsAdvisoryPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function KidsAdvisoryCard({
+  advisory,
+  index,
+  getSeverityColor,
+  formatDate,
+}: {
+  advisory: {
+    _id: string;
+    title: string;
+    description: string;
+    severity: string;
+    advisoryId: string;
+    date: number;
+    fileStorageId?: string;
+    fileType?: string;
+  };
+  index: number;
+  getSeverityColor: (severity: string) => string;
+  formatDate: (timestamp: number) => string;
+}) {
+  // Always call the hook, but pass "skip" if no fileStorageId
+  const fileUrl = useQuery(
+    api.advisories.getFileUrl,
+    advisory.fileStorageId
+      ? { storageId: advisory.fileStorageId as Id<"_storage"> }
+      : "skip",
+  );
+
+  return (
+    <article
+      className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
+      style={{ animationDelay: `${index * 0.1}s` }}
+    >
+      <div
+        className={`absolute top-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left ${
+          advisory.severity === "critical"
+            ? "bg-destructive"
+            : advisory.severity === "high"
+              ? "bg-warning"
+              : advisory.severity === "medium"
+                ? "bg-accent"
+                : "bg-muted-foreground"
+        }`}
+      ></div>
+
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getSeverityColor(
+            advisory.severity,
+          )}`}
+        >
+          {advisory.severity}
+        </span>
+        {advisory.fileType && (
+          <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-semibold">
+            {advisory.fileType === "pdf" ? "PDF" : "Image"}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 mb-3">
+        <HugeiconsIcon
+          icon={IdentificationIcon}
+          size={16}
+          color="currentColor"
+          className="text-primary"
+        />
+        <span className="text-sm font-bold text-primary">
+          {advisory.advisoryId}
+        </span>
+      </div>
+
+      <h2 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors leading-tight">
+        {advisory.title}
+      </h2>
+
+      <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-3">
+        {advisory.description}
+      </p>
+
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 pt-4 border-t border-border">
+        <HugeiconsIcon icon={Calendar01Icon} size={16} color="currentColor" />
+        <span className="font-medium">{formatDate(advisory.date)}</span>
+      </div>
+
+      {fileUrl && (
+        <div className="flex gap-2">
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            className="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all duration-300 gap-2"
+          >
+            <HugeiconsIcon
+              icon={Download01Icon}
+              size={16}
+              color="currentColor"
+            />
+            Download {advisory.fileType === "pdf" ? "PDF" : "File"}
+          </a>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function ImageAdvisoryCard({
+  advisory,
+}: {
+  advisory: {
+    _id: string;
+    title: string;
+    fileStorageId?: string;
+    fileType?: string;
+  };
+}) {
+  const fileUrl = useQuery(
+    api.advisories.getFileUrl,
+    advisory.fileStorageId
+      ? { storageId: advisory.fileStorageId as Id<"_storage"> }
+      : "skip",
+  );
+
+  if (!fileUrl) return null;
+
+  return (
+    <div className="group relative aspect-square rounded-xl overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover-lift">
+      <Image
+        src={fileUrl}
+        alt={advisory.title}
+        fill
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h4 className="text-white font-bold text-sm line-clamp-2">
+            {advisory.title}
+          </h4>
+        </div>
+      </div>
+      <a
+        href={fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0"
+        aria-label={`View ${advisory.title}`}
+      />
+    </div>
   );
 }
