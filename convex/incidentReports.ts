@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { checkRateLimit } from "./lib/rateLimit";
 import { requireAuth } from "./lib/auth";
-import { incidentReportSchema, formatZodError } from "../lib/schemas";
+import { incidentReportSchema, formatZodError, LIMITS } from "../lib/schemas";
 
 // Submit incident report (public - no auth required)
 export const submit = mutation({
@@ -113,7 +113,6 @@ export const updateStatus = mutation({
     // Validate notes length if provided
     let validatedNotes = args.notes;
     if (args.notes !== undefined) {
-      const { LIMITS } = await import("../lib/schemas");
       const trimmed = args.notes.trim();
       if (trimmed.length > LIMITS.NOTES_MAX) {
         throw new Error(`Notes must not exceed ${LIMITS.NOTES_MAX} characters`);

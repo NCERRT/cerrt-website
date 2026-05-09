@@ -3,6 +3,8 @@ import { mutation, query, action, internalAction, internalMutation, internalQuer
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import bcrypt from "bcryptjs";
+import { checkRateLimit, resetRateLimit } from "./lib/rateLimit";
+import { validatePassword } from "./lib/passwordPolicy";
 
 // Session duration: 24 hours (reduced from 30 days for security)
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
@@ -11,7 +13,6 @@ const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 export const checkLoginRateLimit = internalMutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    const { checkRateLimit } = await import("./lib/rateLimit");
     await checkRateLimit(ctx, args.email, "login");
   },
 });
@@ -25,7 +26,6 @@ export const createUser = internalMutation({
   },
   handler: async (ctx, args) => {
     // Check rate limit for signup
-    const { checkRateLimit, resetRateLimit } = await import("./lib/rateLimit");
     await checkRateLimit(ctx, args.email, "signup");
 
     const userId = await ctx.db.insert("users", {
@@ -62,7 +62,6 @@ export const signUp = internalAction({
     }
 
     // Validate password (structure + HIBP breach check)
-    const { validatePassword } = await import("./lib/passwordPolicy");
     const passwordCheck = await validatePassword(args.password);
     if (!passwordCheck.valid) {
       throw new Error(passwordCheck.error || "Invalid password");
@@ -125,7 +124,6 @@ export const createSession = internalMutation({
     });
 
     // Reset rate limit on successful login
-    const { resetRateLimit } = await import("./lib/rateLimit");
     await resetRateLimit(ctx, args.email, "login");
 
     return { userId: args.userId, sessionId };
