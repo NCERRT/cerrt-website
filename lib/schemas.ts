@@ -94,12 +94,38 @@ export type IncidentReportInput = z.infer<typeof incidentReportSchema>;
 // ============================================================
 // Advisory Schema
 // ============================================================
+
+// Advisory ID format: NCA-DDMMYY-NN
+// e.g., NCA-130226-01 = first advisory on 13 Feb 2026
+const ADVISORY_ID_PATTERN = /^NCA-(\d{2})(\d{2})(\d{2})-\d{2}$/;
+
+export const advisoryIdSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .refine((id) => ADVISORY_ID_PATTERN.test(id), {
+    message: "Format must be NCA-DDMMYY-NN (e.g., NCA-130226-01)",
+  })
+  .refine(
+    (id) => {
+      const match = id.match(ADVISORY_ID_PATTERN);
+      if (!match) return true; // First refine catches format issues
+      const day = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      return day >= 1 && day <= 31 && month >= 1 && month <= 12;
+    },
+    {
+      message:
+        "Invalid date in advisory ID (DD must be 01-31, MM must be 01-12)",
+    },
+  );
+
 export const advisorySchema = z.object({
   title: requiredString(LIMITS.TITLE_MAX, "Title"),
   description: requiredString(LIMITS.DESCRIPTION_MAX, "Description"),
   category: advisoryCategorySchema,
   severity: severitySchema,
-  advisoryId: requiredString(LIMITS.ADVISORY_ID_MAX, "Advisory ID"),
+  advisoryId: advisoryIdSchema,
 });
 
 export type AdvisoryInput = z.infer<typeof advisorySchema>;

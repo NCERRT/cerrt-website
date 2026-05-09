@@ -38,33 +38,6 @@ export default function Home() {
     },
   ];
 
-  const highlights = [
-    {
-      title: "24/7",
-      subtitle: "Emergency Response",
-      description: "Round-the-clock surveillance of Nigeria's cyber landscape.",
-      bgColor: "bg-[#1a5f4a]",
-    },
-    {
-      title: "1000+",
-      subtitle: "Incidents Resolved",
-      description: "Successfully handled security events.",
-      bgColor: "bg-[#247a5f]",
-    },
-    {
-      title: "50+",
-      subtitle: "Partner Organizations",
-      description: "Trusted by government and private sector.",
-      bgColor: "bg-[#2d8f6e]",
-    },
-    {
-      title: "99.9%",
-      subtitle: "Response Rate",
-      description: "Incident acknowledgment within hours.",
-      bgColor: "bg-[#37a47d]",
-    },
-  ];
-
   const heroImages = [
     "/hero-images/NITDA25-CHD-AWARENESS-1.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-2.jpg",
@@ -158,39 +131,6 @@ export default function Home() {
                 <Carousel images={heroImages} autoPlay={true} interval={5000} />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Key Highlights */}
-      <section className="py-16 bg-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {highlights.map((highlight, index) => (
-              <div
-                key={index}
-                className={`bg-[#1a5f4a] text-white p-8 rounded-xl hover-lift cursor-pointer card-interactive group relative overflow-hidden animate-slide-in-up`}
-                style={{
-                  animationDelay: `${index * 0.1}s`,
-                }}
-              >
-                {/* Icon decoration */}
-                <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-30 transition-opacity">
-                  <div className="w-12 h-12 rounded-full bg-white/20"></div>
-                </div>
-                <h3 className="text-2xl font-bold text-center mb-1 relative z-10">
-                  {highlight.title}
-                </h3>
-                <h4 className="text-xl font-semibold text-center mb-3 relative z-10">
-                  {highlight.subtitle}
-                </h4>
-                <p className="text-white/90 text-sm text-center relative z-10 leading-relaxed">
-                  {highlight.description}
-                </p>
-                {/* Hover shine effect */}
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300"></div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -302,24 +242,22 @@ export default function Home() {
               Our commitment to cybersecurity excellence in numbers
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {[
               { value: "2014", label: "Established" },
               { value: "24/7", label: "Monitoring" },
-              { value: "1500+", label: "Incidents Handled" },
-              { value: "10+", label: "Partner Organizations" },
             ].map((stat, index) => (
               <div key={index} className="text-center group cursor-pointer">
-                <div className="relative inline-block mb-4">
+                <div className="relative">
                   <div className="absolute inset-0 bg-white/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 ease-out"></div>
-                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 group-hover:bg-white/20 group-hover:scale-101 transition-all duration-500 ease-out">
-                    <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-105 transition-transform duration-500 ease-out">
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-8 py-10 group-hover:bg-white/20 group-hover:scale-[1.02] transition-all duration-500 ease-out">
+                    <div className="text-5xl md:text-6xl font-bold mb-3 group-hover:scale-105 transition-transform duration-500 ease-out">
                       {stat.value}
                     </div>
+                    <div className="text-primary-foreground/80 font-medium text-base uppercase tracking-wider">
+                      {stat.label}
+                    </div>
                   </div>
-                </div>
-                <div className="text-primary-foreground/80 font-medium text-lg">
-                  {stat.label}
                 </div>
               </div>
             ))}

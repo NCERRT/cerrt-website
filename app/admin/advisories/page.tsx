@@ -323,11 +323,20 @@ function AdvisoryForm({
             id="advisoryId"
             value={formData.advisoryId}
             onChange={(e) =>
-              setFormData({ ...formData, advisoryId: e.target.value })
+              setFormData({
+                ...formData,
+                advisoryId: e.target.value.toUpperCase(),
+              })
             }
-            placeholder="IND-2024-001"
+            placeholder="NCA-130226-01"
+            pattern="^NCA-\d{6}-\d{2}$"
+            title="Format: NCA-DDMMYY-NN (e.g., NCA-130226-01)"
             required
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Format: NCA-DDMMYY-NN (e.g., NCA-130226-01 for 1st advisory on 13
+            Feb 2026)
+          </p>
         </div>
         <div>
           <Label htmlFor="category">Category</Label>

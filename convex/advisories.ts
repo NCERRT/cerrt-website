@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./lib/auth";
 import { checkRateLimit } from "./lib/rateLimit";
+import { advisoryIdSchema } from "../lib/schemas";
 
 // File size limits (in bytes)
 const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10MB
@@ -132,6 +133,29 @@ export const create = mutation({
 
     const now = Date.now();
 
+    // Validate advisory ID format (NCA-DDMMYY-NN)
+    const advisoryIdResult = advisoryIdSchema.safeParse(args.advisoryId);
+    if (!advisoryIdResult.success) {
+      throw new Error(
+        advisoryIdResult.error.issues[0]?.message ||
+          "Invalid advisory ID format",
+      );
+    }
+    const validatedAdvisoryId = advisoryIdResult.data;
+
+    // Check for duplicate advisory ID
+    const existing = await ctx.db
+      .query("advisories")
+      .withIndex("by_advisoryId", (q) =>
+        q.eq("advisoryId", validatedAdvisoryId),
+      )
+      .first();
+    if (existing) {
+      throw new Error(
+        `Advisory ID "${validatedAdvisoryId}" already exists. Use a different sequence number.`,
+      );
+    }
+
     // Validate file metadata (size, name length)
     validateFileMetadata(args.fileType, args.fileSize, args.fileName);
 
@@ -145,7 +169,7 @@ export const create = mutation({
       description: args.description,
       category: args.category,
       severity: args.severity,
-      advisoryId: args.advisoryId,
+      advisoryId: validatedAdvisoryId,
       date: now,
       fileStorageId: args.fileStorageId,
       fileType: args.fileType,
@@ -196,6 +220,31 @@ export const update = mutation({
     // Extract id and exclude sessionId from updates
     const { id, sessionId, ...updates } = args;
     void sessionId; // Explicitly mark as unused
+
+    // Validate advisory ID format if changing it
+    if (updates.advisoryId !== undefined) {
+      const advisoryIdResult = advisoryIdSchema.safeParse(updates.advisoryId);
+      if (!advisoryIdResult.success) {
+        throw new Error(
+          advisoryIdResult.error.issues[0]?.message ||
+            "Invalid advisory ID format",
+        );
+      }
+      updates.advisoryId = advisoryIdResult.data;
+
+      // Check for duplicate (excluding the current record)
+      const existing = await ctx.db
+        .query("advisories")
+        .withIndex("by_advisoryId", (q) =>
+          q.eq("advisoryId", updates.advisoryId!),
+        )
+        .first();
+      if (existing && existing._id !== id) {
+        throw new Error(
+          `Advisory ID "${updates.advisoryId}" already exists.`,
+        );
+      }
+    }
 
     // Validate file metadata
     validateFileMetadata(updates.fileType, updates.fileSize, updates.fileName);
