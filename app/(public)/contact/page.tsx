@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { contactFormSchema, formatZodError } from "@/lib/schemas";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Call02Icon,
@@ -13,7 +16,16 @@ import {
   UserGroupIcon,
 } from "@hugeicons/core-free-icons";
 
+type InquiryType =
+  | "general"
+  | "incident"
+  | "advisory"
+  | "training"
+  | "partnership";
+
 export default function ContactPage() {
+  const submitContact = useMutation(api.contactSubmissions.submit);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,13 +33,14 @@ export default function ContactPage() {
     organization: "",
     subject: "",
     message: "",
-    incidentType: "general",
+    incidentType: "general" as InquiryType,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -40,15 +53,40 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setErrorMessage("");
     setSubmitStatus("idle");
 
-    // Simulate form submission (no API integration yet)
-    setTimeout(() => {
-      console.log("Form submitted:", formData);
-      setIsSubmitting(false);
+    // Client-side Zod validation (immediate feedback)
+    const parseResult = contactFormSchema.safeParse({
+      inquiryType: formData.incidentType,
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || undefined,
+      organization: formData.organization || undefined,
+      subject: formData.subject,
+      message: formData.message,
+    });
+
+    if (!parseResult.success) {
+      setErrorMessage(formatZodError(parseResult.error));
+      setSubmitStatus("error");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await submitContact({
+        inquiryType: parseResult.data.inquiryType,
+        name: parseResult.data.name,
+        email: parseResult.data.email,
+        phone: parseResult.data.phone || undefined,
+        organization: parseResult.data.organization || undefined,
+        subject: parseResult.data.subject,
+        message: parseResult.data.message,
+      });
+
       setSubmitStatus("success");
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -58,7 +96,13 @@ export default function ContactPage() {
         message: "",
         incidentType: "general",
       });
-    }, 1500);
+    } catch (error) {
+      const err = error as Error;
+      setErrorMessage(err.message || "Failed to send message");
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,9 +121,9 @@ export default function ContactPage() {
               Contact <span className="text-primary">NITDA CERRT</span>
             </h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Get in touch with NITDA’s Computer Emergency Readiness and
-              Response Team. We’re here to help protect your organization and
-              respond to security incidents.
+              Get in touch with NITDA Computer Emergency Readiness and Response
+              Team. We’re here to help protect your organization and respond to
+              security incidents.
             </p>
           </div>
         </div>
@@ -89,11 +133,6 @@ export default function ContactPage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-block mb-4">
-              <span className="text-primary font-semibold text-sm uppercase tracking-wider bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-                Choose Your Path
-              </span>
-            </div>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4 font-serif">
               How Can We Help?
             </h2>
@@ -391,6 +430,7 @@ export default function ContactPage() {
                         value={formData.name}
                         onChange={handleChange}
                         required
+                        maxLength={100}
                         className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                         placeholder="John Doe"
                       />
@@ -410,6 +450,7 @@ export default function ContactPage() {
                         value={formData.email}
                         onChange={handleChange}
                         required
+                        maxLength={254}
                         className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                         placeholder="john@example.com"
                       />
@@ -431,6 +472,7 @@ export default function ContactPage() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
+                        maxLength={30}
                         className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                         placeholder="+234 XXX XXX XXXX"
                       />
@@ -449,6 +491,7 @@ export default function ContactPage() {
                         name="organization"
                         value={formData.organization}
                         onChange={handleChange}
+                        maxLength={200}
                         className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                         placeholder="Your company name"
                       />
@@ -470,6 +513,7 @@ export default function ContactPage() {
                       value={formData.subject}
                       onChange={handleChange}
                       required
+                      maxLength={200}
                       className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                       placeholder="Brief description of your inquiry"
                     />
@@ -490,9 +534,13 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       rows={6}
+                      maxLength={5000}
                       className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none transition-all"
                       placeholder="Provide detailed information about your inquiry..."
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formData.message.length}/5000 characters
+                    </p>
                   </div>
 
                   {/* Submit Status */}
@@ -514,8 +562,8 @@ export default function ContactPage() {
                         ✗
                       </div>
                       <span>
-                        Failed to send message. Please try again or call our
-                        hotline.
+                        {errorMessage ||
+                          "Failed to send message. Please try again or call our hotline."}
                       </span>
                     </div>
                   )}

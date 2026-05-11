@@ -2,7 +2,11 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./lib/auth";
 import { checkRateLimit } from "./lib/rateLimit";
-import { advisoryIdSchema } from "../lib/schemas";
+import {
+  advisoryIdSchema,
+  advisoryTitleSchema,
+  advisoryDescriptionSchema,
+} from "../lib/schemas";
 
 // File size limits (in bytes)
 const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10MB
@@ -133,6 +137,27 @@ export const create = mutation({
 
     const now = Date.now();
 
+    // Validate title (length, control chars)
+    const titleResult = advisoryTitleSchema.safeParse(args.title);
+    if (!titleResult.success) {
+      throw new Error(
+        titleResult.error.issues[0]?.message || "Invalid title",
+      );
+    }
+    const validatedTitle = titleResult.data;
+
+    // Validate description (length, control chars)
+    const descriptionResult = advisoryDescriptionSchema.safeParse(
+      args.description,
+    );
+    if (!descriptionResult.success) {
+      throw new Error(
+        descriptionResult.error.issues[0]?.message ||
+          "Invalid description",
+      );
+    }
+    const validatedDescription = descriptionResult.data;
+
     // Validate advisory ID format (NCA-DDMMYY-NN)
     const advisoryIdResult = advisoryIdSchema.safeParse(args.advisoryId);
     if (!advisoryIdResult.success) {
@@ -165,8 +190,8 @@ export const create = mutation({
       : undefined;
 
     const id = await ctx.db.insert("advisories", {
-      title: args.title,
-      description: args.description,
+      title: validatedTitle,
+      description: validatedDescription,
       category: args.category,
       severity: args.severity,
       advisoryId: validatedAdvisoryId,
@@ -220,6 +245,26 @@ export const update = mutation({
     // Extract id and exclude sessionId from updates
     const { id, sessionId, ...updates } = args;
     void sessionId; // Explicitly mark as unused
+
+    // Validate title if changing
+    if (updates.title !== undefined) {
+      const result = advisoryTitleSchema.safeParse(updates.title);
+      if (!result.success) {
+        throw new Error(result.error.issues[0]?.message || "Invalid title");
+      }
+      updates.title = result.data;
+    }
+
+    // Validate description if changing
+    if (updates.description !== undefined) {
+      const result = advisoryDescriptionSchema.safeParse(updates.description);
+      if (!result.success) {
+        throw new Error(
+          result.error.issues[0]?.message || "Invalid description",
+        );
+      }
+      updates.description = result.data;
+    }
 
     // Validate advisory ID format if changing it
     if (updates.advisoryId !== undefined) {

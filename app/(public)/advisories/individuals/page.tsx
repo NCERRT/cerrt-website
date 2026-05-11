@@ -193,15 +193,15 @@ export default function IndividualsAdvisoryPage() {
             Subscribe to receive personalized security alerts and updates
             directly to your inbox.
           </p>
-          <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
             <input
               type="email"
               placeholder="Your email address"
-              className="flex-1 px-4 py-3 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-white"
+              className="flex-1 px-4 py-3 bg-white text-foreground placeholder:text-muted-foreground rounded-lg border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-white focus:border-white/50 transition-all"
             />
             <button
               type="submit"
-              className="px-8 py-3 bg-white text-primary font-bold rounded-lg hover:bg-primary-foreground/90 transition-all hover:shadow-xl hover:-translate-y-0.5"
+              className="px-8 py-3 bg-white text-primary font-bold rounded-lg hover:bg-white/90 hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap"
             >
               Subscribe
             </button>

@@ -24,6 +24,11 @@ const RATE_LIMITS = {
     windowMs: 60 * 60 * 1000, // 1 hour
     message: "Too many file uploads. Please try again in 1 hour.",
   },
+  contact_form: {
+    maxAttempts: 5,
+    windowMs: 60 * 60 * 1000, // 1 hour
+    message: "Too many contact form submissions. Please try again in 1 hour.",
+  },
 } as const;
 
 type RateLimitAction = keyof typeof RATE_LIMITS;

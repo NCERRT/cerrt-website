@@ -10,6 +10,7 @@
 
 import type * as advisories from "../advisories.js";
 import type * as auth from "../auth.js";
+import type * as contactSubmissions from "../contactSubmissions.js";
 import type * as crons from "../crons.js";
 import type * as defacementStats from "../defacementStats.js";
 import type * as incidentReports from "../incidentReports.js";
@@ -28,6 +29,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   advisories: typeof advisories;
   auth: typeof auth;
+  contactSubmissions: typeof contactSubmissions;
   crons: typeof crons;
   defacementStats: typeof defacementStats;
   incidentReports: typeof incidentReports;

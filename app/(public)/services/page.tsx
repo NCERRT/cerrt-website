@@ -40,12 +40,6 @@ export default function ServicesPage() {
       frequency: "Continuous",
       description:
         "Real-time threat analysis and intelligence sharing to help organizations stay ahead of cyber threats.",
-      features: [
-        "Threat landscape analysis",
-        "IOC sharing",
-        "Attack pattern recognition",
-        "Predictive analytics",
-      ],
       icon: Search01Icon,
     },
     {
@@ -54,12 +48,7 @@ export default function ServicesPage() {
       frequency: "On-demand",
       description:
         "Comprehensive security assessments to identify and remediate vulnerabilities in your systems.",
-      features: [
-        "Network scanning",
-        "Web application testing",
-        "Remediation guidance",
-        "Infrastructure review",
-      ],
+
       icon: LockPasswordIcon,
     },
     {
@@ -68,41 +57,9 @@ export default function ServicesPage() {
       frequency: "Scheduled",
       description:
         "Educational programs to improve cybersecurity awareness across Nigeria’s digital ecosystem.",
-      features: [
-        "Customized training modules",
-        "Phishing simulations",
-        "Security workshops",
-      ],
+
       icon: UserLove02Icon,
     },
-    // {
-    //   title: "Capacity Building",
-    //   timing: "2-4 weeks",
-    //   frequency: "Quarterly",
-    //   description:
-    //     "Training and certification programs for cybersecurity professionals and security teams.",
-    //   features: [
-    //     "Technical training",
-    //     "Leadership development",
-    //     "Mentorship programs",
-    //     "Best practices workshops",
-    //   ],
-    //   icon: BookOpen02Icon,
-    // },
-    // {
-    //   title: "Advisory Services",
-    //   timing: "3-7 days",
-    //   frequency: "Business hours",
-    //   description:
-    //     "Expert consultation and guidance on cybersecurity policies and implementation strategies",
-    //   features: [
-    //     "Risk assessment",
-    //     "Strategic planning",
-    //     "Policy development",
-    //     "Compliance guidance",
-    //   ],
-    //   icon: Settings02Icon,
-    // },
   ];
 
   return (
@@ -187,41 +144,6 @@ export default function ServicesPage() {
                 <p className="text-muted-foreground text-base mb-6 flex-1 leading-relaxed">
                   {service.description}
                 </p>
-
-                {/* Features */}
-                <div className="mb-8">
-                  <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                    <div className="w-1 h-4 bg-primary rounded-full"></div>
-                    Key Features
-                  </h4>
-                  <ul className="space-y-3">
-                    {service.features.map((feature, featureIndex) => (
-                      <li
-                        key={featureIndex}
-                        className="flex items-start gap-3 text-sm text-muted-foreground group/item"
-                      >
-                        <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-success/20 transition-colors">
-                          <svg
-                            className="w-3 h-3 text-success"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={3}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                        <span className="group-hover/item:text-foreground transition-colors">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
 
                 {/* CTA Button */}
                 <Link

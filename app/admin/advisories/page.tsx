@@ -367,8 +367,12 @@ function AdvisoryForm({
           onChange={(e) =>
             setFormData({ ...formData, title: e.target.value })
           }
+          maxLength={200}
           required
         />
+        <p className="text-xs text-gray-500 mt-1">
+          {formData.title.length}/200 characters
+        </p>
       </div>
 
       <div>
@@ -380,8 +384,12 @@ function AdvisoryForm({
             setFormData({ ...formData, description: e.target.value })
           }
           rows={4}
+          maxLength={5000}
           required
         />
+        <p className="text-xs text-gray-500 mt-1">
+          {formData.description.length}/5000 characters
+        </p>
       </div>
 
       <div>

@@ -4,17 +4,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Target03Icon,
   Telescope01Icon,
-  SecurityIcon,
-  Agreement01Icon,
-  ViewIcon,
-  FlashIcon,
-  Certificate01Icon,
-  GlobalIcon,
-  ComputerProtectionIcon,
   UserGroupIcon,
-  BrickWallShieldIcon,
-  Scroll01Icon,
-  FileBadgeIcon,
+  Idea01Icon,
+  Award02Icon,
 } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 
@@ -27,28 +19,22 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   const values = [
     {
-      title: "Security First",
+      title: "People First",
       description:
-        "We prioritize the protection of Nigeria's digital infrastructure above all else.",
-      icon: SecurityIcon,
+        "We put Nigerians at the heart of everything we do, building trust through every interaction and decision.",
+      icon: UserGroupIcon,
     },
     {
-      title: "Collaboration",
+      title: "Innovative",
       description:
-        "We work closely with government, private sector, and international partners.",
-      icon: Agreement01Icon,
+        "We embrace new technologies and creative approaches to stay ahead of evolving cyber threats.",
+      icon: Idea01Icon,
     },
     {
-      title: "Transparency",
+      title: "Professionalism",
       description:
-        "We maintain open communication and share threat intelligence responsibly.",
-      icon: ViewIcon,
-    },
-    {
-      title: "Service",
-      description:
-        "We are dedicated to serving Nigeria and protecting our digital future.",
-      icon: FlashIcon,
+        "We deliver our services with integrity, expertise, and the highest standards of excellence.",
+      icon: Award02Icon,
     },
   ];
 
@@ -137,155 +123,7 @@ export default function AboutPage() {
                 built on trust, innovation and collaboration.
               </p>
             </div>
-            <div className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden">
-              {/* Accent corner */}
-              <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full group-hover:scale-150 transition-transform duration-500"></div>
-              {/* Top accent line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
-              <div className="mb-6 relative z-10">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-                  <HugeiconsIcon
-                    icon={FileBadgeIcon}
-                    size={32}
-                    color="currentColor"
-                    className="text-primary group-hover:text-white transition-colors"
-                  />
-                </div>
-              </div>
-              <h2 className="text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-                Notable Mentions
-              </h2>
-              <div className="text-[#737373]">
-                <p className="flex items-center gap-2 text-lg mb-2">
-                  <HugeiconsIcon
-                    icon={Certificate01Icon}
-                    size={28}
-                    color="currentColor"
-                    className="text-primary font-semibold"
-                  />
-                  ISO 27001 Certified
-                </p>
-                <p className="flex items-center gap-2 text-lg mb-2">
-                  <HugeiconsIcon
-                    icon={GlobalIcon}
-                    size={28}
-                    color="currentColor"
-                    className="text-primary font-semibold"
-                  />
-                  Member of Global CERT Community
-                </p>
-                <p className="flex items-center gap-2 text-lg mb-2">
-                  <HugeiconsIcon
-                    icon={ComputerProtectionIcon}
-                    size={28}
-                    color="currentColor"
-                    className="text-primary font-semibold"
-                  />
-                  Protected 500+ Organizations
-                </p>
-                <p className="flex items-center gap-2 text-lg mb-2">
-                  <HugeiconsIcon
-                    icon={UserGroupIcon}
-                    size={28}
-                    color="currentColor"
-                    className="text-primary font-semibold"
-                  />
-                  Trained 2000+ Professionals
-                </p>
-              </div>
-            </div>
-            <div className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden">
-              {/* Accent corner */}
-              <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full group-hover:scale-150 transition-transform duration-500"></div>
-              {/* Top accent line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
-              <div className="mb-6 relative z-10">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-                  <HugeiconsIcon
-                    icon={Scroll01Icon}
-                    size={32}
-                    color="currentColor"
-                    className="text-primary group-hover:text-white transition-colors"
-                  />
-                </div>
-              </div>
-              <h2 className="text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-                NITDA SRAP Pillars We Abide By
-              </h2>
-              <div className="text-[#737373] ">
-                <div className="gap-2 text-lg mb-2 flex items-center">
-                  <HugeiconsIcon
-                    icon={BrickWallShieldIcon}
-                    size={28}
-                    color="currentColor"
-                    className="text-primary font-semibold"
-                  />
-                  <p>
-                    <span className="font-semibold">Pillar 5</span> <br />
-                    Strengthen Cybersecurity and Enhance Digital Trust.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-lg mb-2">
-                  <HugeiconsIcon
-                    icon={Agreement01Icon}
-                    size={28}
-                    color="currentColor"
-                    className="text-primary font-semibold"
-                  />
-                  <p>
-                    <span className="font-semibold">Pillar 7</span> <br /> Forge
-                    Strategic Partnerships and Collaborations.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
-
-          {/* <div className="bg-secondary p-8 mt-10 max-w-xl mx-auto rounded-2xl border border-border group hover-lift card-interactive">
-            <h3 className="text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-              Notable Mentions
-            </h3>
-            <div className="text-[#737373]">
-              <p className="flex items-center gap-2 text-lg mb-2">
-                <HugeiconsIcon
-                  icon={Certificate01Icon}
-                  size={28}
-                  color="currentColor"
-                  className="text-primary font-semibold"
-                />
-                ISO 27001 Certified
-              </p>
-              <p className="flex items-center gap-2 text-lg mb-2">
-                <HugeiconsIcon
-                  icon={GlobalIcon}
-                  size={28}
-                  color="currentColor"
-                  className="text-primary font-semibold"
-                />
-                Member of Global CERT Community
-              </p>
-              <p className="flex items-center gap-2 text-lg mb-2">
-                <HugeiconsIcon
-                  icon={ComputerProtectionIcon}
-                  size={28}
-                  color="currentColor"
-                  className="text-primary font-semibold"
-                />
-                Protected 500+ Organizations
-              </p>
-              <p className="flex items-center gap-2 text-lg mb-2">
-                <HugeiconsIcon
-                  icon={UserGroupIcon}
-                  size={28}
-                  color="currentColor"
-                  className="text-primary font-semibold"
-                />
-                Trained 2000+ Professionals
-              </p>
-            </div>
-          </div> */}
         </div>
       </section>
 
@@ -310,7 +148,7 @@ export default function AboutPage() {
               Nigeria&apos;s digital landscape
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {[
               {
                 value: "2014",
@@ -322,31 +160,21 @@ export default function AboutPage() {
                 label: "Monitoring",
                 subtitle: "Round-the-clock monitoring",
               },
-              {
-                value: "1500+",
-                label: "Incidents Handled",
-                subtitle: "Successfully resolved cases",
-              },
-              {
-                value: "10+",
-                label: "Partner Organizations",
-                subtitle: "Trusted collaborators",
-              },
             ].map((stat, index) => (
-              <div key={index} className="group text-center cursor-pointer">
-                <div className="relative inline-block mb-4">
-                  <div className="absolute inset-0 bg-white/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
-                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 group-hover:bg-white/20 group-hover:scale-101 transition-all duration-300">
-                    <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform">
+              <div key={index} className="group cursor-pointer">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-white/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 ease-out"></div>
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-8 py-10 text-center group-hover:bg-white/20 group-hover:scale-[1.02] transition-all duration-500 ease-out">
+                    <div className="text-5xl md:text-6xl font-bold mb-3 group-hover:scale-105 transition-transform duration-500 ease-out">
                       {stat.value}
                     </div>
+                    <div className="text-primary-foreground font-bold text-base uppercase tracking-wider mb-2">
+                      {stat.label}
+                    </div>
+                    <div className="text-primary-foreground/70 text-sm">
+                      {stat.subtitle}
+                    </div>
                   </div>
-                </div>
-                <div className="text-primary-foreground font-bold text-lg mb-1">
-                  {stat.label}
-                </div>
-                <div className="text-primary-foreground/70 text-sm">
-                  {stat.subtitle}
                 </div>
               </div>
             ))}
@@ -371,7 +199,7 @@ export default function AboutPage() {
               Nigeria’s cybersecurity.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {values.map((value, index) => (
               <div
                 key={index}

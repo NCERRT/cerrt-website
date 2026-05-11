@@ -19,7 +19,7 @@ const dmSerif = DM_Serif_Display({
 export const metadata: Metadata = {
   title: "CERRT - Computer Emergency Readiness & Response Team",
   description:
-    "NITDA's Computer Emergency Readiness and Response Team - Protecting Nigeria's digital infrastructure",
+    "NITDA Computer Emergency Readiness and Response Team - Protecting Nigeria's digital infrastructure",
 };
 
 export default function RootLayout({

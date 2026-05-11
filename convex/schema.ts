@@ -71,6 +71,32 @@ export default defineSchema({
     .index("by_identifier_action", ["identifier", "action"])
     .index("by_windowStart", ["windowStart"]),
 
+  // Contact form submissions (from public users via Contact page)
+  contactSubmissions: defineTable({
+    inquiryType: v.union(
+      v.literal("general"),
+      v.literal("incident"),
+      v.literal("advisory"),
+      v.literal("training"),
+      v.literal("partnership"),
+    ),
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    organization: v.optional(v.string()),
+    subject: v.string(),
+    message: v.string(),
+    submittedAt: v.number(),
+    status: v.union(
+      v.literal("new"),
+      v.literal("read"),
+      v.literal("responded"),
+      v.literal("closed"),
+    ),
+  })
+    .index("by_status", ["status"])
+    .index("by_submittedAt", ["submittedAt"]),
+
   // Incident reports (from public users via Report Incident modal)
   incidentReports: defineTable({
     type: v.string(), // e.g., "Phishing", "Malware", "Data Breach"

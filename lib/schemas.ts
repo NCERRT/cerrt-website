@@ -69,6 +69,21 @@ export const incidentStatusSchema = z.enum([
   "closed",
 ]);
 
+export const inquiryTypeSchema = z.enum([
+  "general",
+  "incident",
+  "advisory",
+  "training",
+  "partnership",
+]);
+
+export const contactStatusSchema = z.enum([
+  "new",
+  "read",
+  "responded",
+  "closed",
+]);
+
 export const advisoryCategorySchema = z.enum([
   "individuals",
   "organizations",
@@ -90,6 +105,21 @@ export const incidentReportSchema = z.object({
 });
 
 export type IncidentReportInput = z.infer<typeof incidentReportSchema>;
+
+// ============================================================
+// Contact Form Schema
+// ============================================================
+export const contactFormSchema = z.object({
+  inquiryType: inquiryTypeSchema,
+  name: requiredString(LIMITS.NAME_MAX, "Name"),
+  email: emailSchema,
+  phone: phoneSchema.optional().or(z.literal("")),
+  organization: safeString(LIMITS.ORGANIZATION_MAX).optional().or(z.literal("")),
+  subject: requiredString(LIMITS.TITLE_MAX, "Subject"),
+  message: requiredString(LIMITS.DESCRIPTION_MAX, "Message"),
+});
+
+export type ContactFormInput = z.infer<typeof contactFormSchema>;
 
 // ============================================================
 // Advisory Schema
@@ -120,9 +150,15 @@ export const advisoryIdSchema = z
     },
   );
 
+export const advisoryTitleSchema = requiredString(LIMITS.TITLE_MAX, "Title");
+export const advisoryDescriptionSchema = requiredString(
+  LIMITS.DESCRIPTION_MAX,
+  "Description",
+);
+
 export const advisorySchema = z.object({
-  title: requiredString(LIMITS.TITLE_MAX, "Title"),
-  description: requiredString(LIMITS.DESCRIPTION_MAX, "Description"),
+  title: advisoryTitleSchema,
+  description: advisoryDescriptionSchema,
   category: advisoryCategorySchema,
   severity: severitySchema,
   advisoryId: advisoryIdSchema,
