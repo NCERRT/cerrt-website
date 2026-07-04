@@ -8,6 +8,7 @@ import { requireSuperadmin } from "@/lib/server/auth";
 import { sendInviteEmail } from "@/lib/server/email";
 import { z } from "zod";
 import { formatZodError, LIMITS } from "@/lib/schemas";
+import { logAction } from "@/lib/server/audit";
 
 // 72-hour temp password validity
 const TEMP_PASSWORD_TTL_MS = 72 * 60 * 60 * 1000;
@@ -116,7 +117,7 @@ export async function inviteAdminAction(input: {
   const passwordHash = await bcrypt.hash(tempPassword, 10);
   const expiresAt = new Date(Date.now() + TEMP_PASSWORD_TTL_MS);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       name,
@@ -131,6 +132,13 @@ export async function inviteAdminAction(input: {
   // Send the invite BEFORE returning. If email fails we throw and the user
   // record still exists — the superadmin can then "Resend Invite" to retry.
   await sendInviteEmail(email, name, tempPassword);
+
+  await logAction({
+    action: "USER_INVITE",
+    description: `Invited new administrator ${name} (${email})`,
+    targetId: user.id,
+    targetType: "User",
+  });
 
   revalidatePath("/admin/team");
   return { email };
@@ -208,6 +216,15 @@ export async function toggleTeamMemberActiveAction(
       where: { userId },
     });
   }
+
+  await logAction({
+    action: nextDeactivatedState ? "USER_DEACTIVATE" : "USER_REACTIVATE",
+    description: nextDeactivatedState
+      ? `Deactivated administrator account for ${user.name} (${user.email})`
+      : `Reactivated administrator account for ${user.name} (${user.email})`,
+    targetId: user.id,
+    targetType: "User",
+  });
 
   revalidatePath("/admin/team");
 

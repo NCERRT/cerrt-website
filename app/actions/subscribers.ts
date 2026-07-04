@@ -10,6 +10,7 @@ import {
   deleteSubscriber,
 } from "@/lib/server/subscribers";
 import { subscribeSchema, formatZodError } from "@/lib/schemas";
+import { logAction } from "@/lib/server/audit";
 
 /**
  * Public: subscribe an email to advisory notifications.
@@ -60,8 +61,13 @@ export async function deleteSubscriberAction(id: string): Promise<void> {
  * The client turns this into a Blob download.
  */
 export async function exportSubscribersCsvAction(): Promise<string> {
-  await requireAuth();
+  const me = await requireAuth();
   const subs = await listSubscribers();
+
+  await logAction({
+    action: "SUBSCRIBERS_EXPORT",
+    description: `Administrator ${me.name} (${me.email}) exported the subscriber list to CSV.`,
+  });
 
   const escape = (v: string) => {
     // Prevent CSV formula injection: prefix values starting with =, +, -, @, tab, CR

@@ -16,6 +16,7 @@ import {
   Cancel01Icon,
   MailAtSign02Icon,
   UserGroupIcon,
+  Task01Icon,
 } from "@hugeicons/core-free-icons";
 
 export default function AdminLayout({
@@ -180,6 +181,11 @@ function AdminDashboard({
             href: "/admin/team",
             label: "Team",
             icon: UserGroupIcon,
+          },
+          {
+            href: "/admin/audit-logs",
+            label: "Audit Logs",
+            icon: Task01Icon,
           },
         ]
       : []),

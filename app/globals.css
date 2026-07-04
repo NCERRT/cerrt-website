@@ -156,3 +156,23 @@ body {
   transform: translateY(-8px);
   box-shadow: 0 20px 40px -10px hsl(var(--primary) / 0.15);
 }
+
+/* Global Interactive Cursor Pointers */
+button,
+[role="button"],
+a,
+select,
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+/* Ensure disabled states show the correct cursor */
+button:disabled,
+input:disabled,
+select:disabled,
+[disabled] {
+  cursor: not-allowed !important;
+}

@@ -14,6 +14,7 @@ import {
 } from "@/lib/server/auth";
 import { checkRateLimit, resetRateLimit } from "@/lib/server/rateLimit";
 import { validatePassword } from "@/lib/server/passwordPolicy";
+import { logAction } from "@/lib/server/audit";
 
 /**
  * Sign in an admin user. Sets the session cookie on success.
@@ -25,48 +26,59 @@ export async function signInAction(
 ): Promise<AuthUser> {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // Rate limit BEFORE credential check (mitigates brute force + timing)
-  await checkRateLimit(normalizedEmail, "login");
+  try {
+    // Rate limit BEFORE credential check (mitigates brute force + timing)
+    await checkRateLimit(normalizedEmail, "login");
 
-  const user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
-  // Generic error — never reveal whether the email exists
-  if (!user) {
-    throw new Error("Invalid email or password");
+    // Generic error — never reveal whether the email exists
+    if (!user) {
+      throw new Error("Invalid email or password");
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      throw new Error("Invalid email or password");
+    }
+
+    // Check if temp password has expired
+    if (user.tempPasswordExpiresAt && user.tempPasswordExpiresAt < new Date()) {
+      throw new Error("Your temporary password has expired. Please contact a super-admin for a new invite.");
+    }
+
+    // Prevent login for deactivated users
+    if (user.isDeactivated) {
+      throw new Error("Your account has been deactivated. Please contact a super-administrator.");
+    }
+
+    // Create session and set the HTTP-only cookie
+    const sessionId = await createSession(user.id);
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_COOKIE, sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_DURATION_SEC,
+      path: "/",
+    });
+
+    // Clear the rate limit on successful login
+    await resetRateLimit(normalizedEmail, "login");
+
+    return { id: user.id, email: user.email, name: user.name, mustChangePassword: user.mustChangePassword, role: user.role };
+  } catch (error) {
+    const err = error as Error;
+    await logAction({
+      action: "AUTH_LOGIN_FAILURE",
+      description: `Failed login attempt for email: ${normalizedEmail} (${err.message})`,
+      actorOverride: { id: null, email: normalizedEmail, name: "Failed Login Actor" },
+      metadata: { error: err.message },
+    });
+    throw error;
   }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    throw new Error("Invalid email or password");
-  }
-
-  // Check if temp password has expired
-  if (user.tempPasswordExpiresAt && user.tempPasswordExpiresAt < new Date()) {
-    throw new Error("Your temporary password has expired. Please contact a super-admin for a new invite.");
-  }
-
-  // Prevent login for deactivated users
-  if (user.isDeactivated) {
-    throw new Error("Your account has been deactivated. Please contact a super-administrator.");
-  }
-
-  // Create session and set the HTTP-only cookie
-  const sessionId = await createSession(user.id);
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, sessionId, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: SESSION_DURATION_SEC,
-    path: "/",
-  });
-
-  // Clear the rate limit on successful login
-  await resetRateLimit(normalizedEmail, "login");
-
-  return { id: user.id, email: user.email, name: user.name, mustChangePassword: user.mustChangePassword, role: user.role };
 }
 
 /**
@@ -130,6 +142,13 @@ export async function changePasswordAction(
       mustChangePassword: false,
       tempPasswordExpiresAt: null,
     },
+  });
+
+  await logAction({
+    action: "AUTH_PASSWORD_CHANGE",
+    description: `User ${user.email} changed their password.`,
+    targetId: user.id,
+    targetType: "User",
   });
 
   // Destroy all sessions and create a fresh one
@@ -249,6 +268,18 @@ export async function resetPasswordAction(
   await prisma.passwordResetToken.update({
     where: { id: resetToken.id },
     data: { usedAt: new Date() },
+  });
+
+  await logAction({
+    action: "AUTH_RESET_SUCCESS",
+    description: `User ${resetToken.user.email} reset their password using a reset token.`,
+    actorOverride: {
+      id: resetToken.userId,
+      email: resetToken.user.email,
+      name: resetToken.user.name,
+    },
+    targetId: resetToken.userId,
+    targetType: "User",
   });
 
   // Destroy all sessions for this user

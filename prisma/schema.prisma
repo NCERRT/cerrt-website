@@ -75,6 +75,7 @@ model User {
   defacementStats     DefacementStat[]
   reviewedReports     IncidentReport[]
   passwordResetTokens PasswordResetToken[]
+  auditLogs           AuditLog[]
 
   @@map("users")
 }
@@ -191,4 +192,33 @@ model ContactSubmission {
   @@index([status])
   @@index([submittedAt])
   @@map("contact_submissions")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  
+  // Actor metadata
+  userId      String?
+  userEmail   String?
+  userName    String?
+  
+  // Action details
+  action      String   // e.g. "AUTH_LOGIN_FAILURE", "USER_INVITE"
+  description String   // e.g. "Jane Doe was invited to join as an administrator."
+  
+  // Target metadata
+  targetId    String?
+  targetType  String?
+  
+  // Technical metadata
+  ipAddress   String?
+  metadata    Json?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
 }

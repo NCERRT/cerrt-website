@@ -7,9 +7,13 @@ import {
   Alert02Icon,
   ChartLineData01Icon,
   ArrowUpRight01Icon,
+  MailAtSign02Icon,
+  UserGroupIcon,
+  Task01Icon,
 } from "@hugeicons/core-free-icons";
 import { getAdvisoriesAction } from "@/app/actions/advisories";
 import { getIncidentStatsAction } from "@/app/actions/incidentReports";
+import { useAuth } from "@/lib/useAuth";
 
 interface IncidentStats {
   total: number;
@@ -20,6 +24,7 @@ interface IncidentStats {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const [advisoryCount, setAdvisoryCount] = useState(0);
   const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(
     null,
@@ -39,26 +44,74 @@ export default function AdminDashboard() {
       label: "Total Advisories",
       value: advisoryCount,
       icon: FileScriptIcon,
-      color: "bg-blue-500",
+      bgClass: "bg-blue-50 text-blue-600 border border-blue-100",
+      hoverBgClass: "group-hover:bg-blue-600 group-hover:text-white",
     },
     {
       label: "New Reports",
       value: incidentStats?.new || 0,
       icon: Alert02Icon,
-      color: "bg-red-500",
+      bgClass: "bg-red-50 text-red-600 border border-red-100",
+      hoverBgClass: "group-hover:bg-red-600 group-hover:text-white",
     },
     {
       label: "Reviewing",
       value: incidentStats?.reviewing || 0,
       icon: ArrowUpRight01Icon,
-      color: "bg-yellow-500",
+      bgClass: "bg-amber-50 text-amber-600 border border-amber-100",
+      hoverBgClass: "group-hover:bg-amber-600 group-hover:text-white",
     },
     {
       label: "Resolved",
       value: incidentStats?.resolved || 0,
       icon: ChartLineData01Icon,
-      color: "bg-green-500",
+      bgClass: "bg-green-50 text-green-600 border border-green-100",
+      hoverBgClass: "group-hover:bg-green-600 group-hover:text-white",
     },
+  ];
+
+  // Dynamic quick actions list based on user role
+  const quickActions = [
+    {
+      href: "/admin/advisories",
+      label: "Manage Advisories",
+      description: "Create, edit, and publish security advisories for the public",
+      icon: FileScriptIcon,
+    },
+    {
+      href: "/admin/reports",
+      label: "Review Reports",
+      description: "Analyze, assign severity, and resolve reported incidents",
+      icon: Alert02Icon,
+    },
+    {
+      href: "/admin/statistics",
+      label: "Update Statistics",
+      description: "Add defaced website stats for internal tracking charts",
+      icon: ChartLineData01Icon,
+    },
+    {
+      href: "/admin/subscribers",
+      label: "Mailing Subscribers",
+      description: "List email notification subscribers and export CSV reports",
+      icon: MailAtSign02Icon,
+    },
+    ...(user?.role === "superadmin"
+      ? [
+          {
+            href: "/admin/team",
+            label: "Manage Team",
+            description: "Invite new admin members and suspend or restore access",
+            icon: UserGroupIcon,
+          },
+          {
+            href: "/admin/audit-logs",
+            label: "Security Audit Logs",
+            description: "Track system authentication activity and administrative logs",
+            icon: Task01Icon,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -77,20 +130,20 @@ export default function AdminDashboard() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:shadow-lg hover:border-primary hover:-translate-y-1 transition-all duration-200 group"
           >
             <div className="flex items-center justify-between mb-4">
               <div
-                className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center`}
+                className={`${stat.bgClass} ${stat.hoverBgClass} w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200`}
               >
                 <HugeiconsIcon
                   icon={stat.icon}
                   size={24}
-                  color="white"
+                  color="currentColor"
                 />
               </div>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">
+            <div className="text-3xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors duration-200">
               {stat.value}
             </div>
             <div className="text-sm text-gray-600">{stat.label}</div>
@@ -98,45 +151,35 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Recent Activity */}
+      {/* Quick Actions Grid */}
       <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <h2 className="text-xl font-bold text-gray-900 mb-6 font-serif">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/admin/advisories"
-            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-all"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">
-              Manage Advisories
-            </h3>
-            <p className="text-sm text-gray-600">
-              Create, edit, and publish security advisories
-            </p>
-          </a>
-          <a
-            href="/admin/statistics"
-            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-all"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">
-              Update Statistics
-            </h3>
-            <p className="text-sm text-gray-600">
-              Add defacement incident data
-            </p>
-          </a>
-          <a
-            href="/admin/reports"
-            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-all"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">
-              Review Reports
-            </h3>
-            <p className="text-sm text-gray-600">
-              Manage incident reports from users
-            </p>
-          </a>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quickActions.map((action) => (
+            <a
+              key={action.href}
+              href={action.href}
+              className="p-5 bg-white border-2 border-gray-200 rounded-xl hover:border-primary hover:shadow-lg flex flex-col justify-between group hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+            >
+              <div>
+                <div className="w-10 h-10 bg-primary/5 rounded-lg flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+                  <HugeiconsIcon
+                    icon={action.icon}
+                    size={20}
+                    color="currentColor"
+                  />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1.5 group-hover:text-primary transition-colors duration-200">
+                  {action.label}
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {action.description}
+                </p>
+              </div>
+            </a>
+          ))}
         </div>
       </div>
     </div>

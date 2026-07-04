@@ -58,11 +58,51 @@ export default function ReportsPage() {
   }, [loadData]);
 
   const statusCounts = [
-    { label: "All", value: undefined, count: stats?.total || 0, icon: Alert02Icon, color: "bg-gray-500" },
-    { label: "New", value: "new", count: stats?.new || 0, icon: Alert02Icon, color: "bg-red-500" },
-    { label: "Reviewing", value: "reviewing", count: stats?.reviewing || 0, icon: Clock01Icon, color: "bg-yellow-500" },
-    { label: "Resolved", value: "resolved", count: stats?.resolved || 0, icon: CheckmarkCircle02Icon, color: "bg-green-500" },
-    { label: "Closed", value: "closed", count: stats?.closed || 0, icon: CheckmarkCircle02Icon, color: "bg-gray-400" },
+    {
+      label: "All",
+      value: undefined,
+      count: stats?.total || 0,
+      icon: Alert02Icon,
+      bgClass: "bg-gray-50 text-gray-600 border border-gray-200",
+      hoverBgClass: "group-hover:bg-gray-600 group-hover:text-white",
+      activeBgClass: "bg-gray-600 text-white",
+    },
+    {
+      label: "New",
+      value: "new",
+      count: stats?.new || 0,
+      icon: Alert02Icon,
+      bgClass: "bg-red-50 text-red-600 border border-red-100",
+      hoverBgClass: "group-hover:bg-red-600 group-hover:text-white",
+      activeBgClass: "bg-red-600 text-white",
+    },
+    {
+      label: "Reviewing",
+      value: "reviewing",
+      count: stats?.reviewing || 0,
+      icon: Clock01Icon,
+      bgClass: "bg-amber-50 text-amber-600 border border-amber-100",
+      hoverBgClass: "group-hover:bg-amber-600 group-hover:text-white",
+      activeBgClass: "bg-amber-600 text-white",
+    },
+    {
+      label: "Resolved",
+      value: "resolved",
+      count: stats?.resolved || 0,
+      icon: CheckmarkCircle02Icon,
+      bgClass: "bg-green-50 text-green-600 border border-green-100",
+      hoverBgClass: "group-hover:bg-green-600 group-hover:text-white",
+      activeBgClass: "bg-green-600 text-white",
+    },
+    {
+      label: "Closed",
+      value: "closed",
+      count: stats?.closed || 0,
+      icon: CheckmarkCircle02Icon,
+      bgClass: "bg-gray-50 text-gray-500 border border-gray-200",
+      hoverBgClass: "group-hover:bg-gray-500 group-hover:text-white",
+      activeBgClass: "bg-gray-500 text-white",
+    },
   ];
 
   return (
@@ -77,34 +117,41 @@ export default function ReportsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-        {statusCounts.map((stat) => (
-          <button
-            key={stat.label}
-            onClick={() => setStatusFilter(stat.value as "new" | "reviewing" | "resolved" | "closed" | undefined)}
-            className={`bg-white rounded-xl border-2 p-6 text-left hover:shadow-lg transition-all ${
-              statusFilter === stat.value
-                ? "border-primary"
-                : "border-gray-200"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div
-                className={`${stat.color} w-10 h-10 rounded-lg flex items-center justify-center`}
-              >
-                <HugeiconsIcon
-                  icon={stat.icon}
-                  size={20}
-                  color="white"
-                />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {statusCounts.map((stat) => {
+          const isActive = statusFilter === stat.value;
+          return (
+            <button
+              key={stat.label}
+              onClick={() => setStatusFilter(stat.value as "new" | "reviewing" | "resolved" | "closed" | undefined)}
+              className={`bg-white rounded-xl border-2 p-6 text-left hover:shadow-lg transition-all duration-200 group hover:-translate-y-0.5 cursor-pointer ${
+                isActive
+                  ? "border-primary"
+                  : "border-gray-200"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                    isActive
+                      ? stat.activeBgClass
+                      : `${stat.bgClass} ${stat.hoverBgClass}`
+                  }`}
+                >
+                  <HugeiconsIcon
+                    icon={stat.icon}
+                    size={20}
+                    color="currentColor"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {stat.count}
-            </div>
-            <div className="text-sm text-gray-600">{stat.label}</div>
-          </button>
-        ))}
+              <div className="text-2xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors duration-200">
+                {stat.count}
+              </div>
+              <div className="text-sm text-gray-600">{stat.label}</div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Reports List */}

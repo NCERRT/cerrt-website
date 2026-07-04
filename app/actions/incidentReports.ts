@@ -17,6 +17,8 @@ import {
   formatZodError,
   LIMITS,
 } from "@/lib/schemas";
+import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/server/audit";
 import {
   generateTrackingCode,
   isValidTrackingCode,
@@ -152,6 +154,21 @@ export async function updateIncidentStatusAction(
     user.id,
     validatedNotes,
   );
+
+  const report = await prisma.incidentReport.findUnique({
+    where: { id },
+  });
+
+  await logAction({
+    action: "INCIDENT_UPDATE",
+    description: `Incident report ${report?.trackingCode || id} updated to status: ${statusResult.data}`,
+    targetId: id,
+    targetType: "IncidentReport",
+    metadata: {
+      status: statusResult.data,
+      notesProvided: !!validatedNotes,
+    },
+  });
 
   revalidatePath("/admin/reports");
   revalidatePath("/admin");

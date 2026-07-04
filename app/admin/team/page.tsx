@@ -127,22 +127,19 @@ export default function TeamPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
-                  Name
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase whitespace-nowrap">
+                  User / Email
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase whitespace-nowrap">
                   Role
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase whitespace-nowrap">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase whitespace-nowrap">
                   Added
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase">
+                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -151,7 +148,7 @@ export default function TeamPage() {
               {members === null ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-6 py-8 text-center text-gray-500 text-sm"
                   >
                     Loading...
@@ -160,7 +157,7 @@ export default function TeamPage() {
               ) : members.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-6 py-12 text-center text-gray-500 text-sm"
                   >
                     No team members yet.
@@ -169,29 +166,31 @@ export default function TeamPage() {
               ) : (
                 members.map((m) => (
                   <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {m.name}
-                      {m.isSelf && (
-                        <span className="ml-2 text-xs text-gray-500 font-normal">
-                          (you)
-                        </span>
-                      )}
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span>{m.name}</span>
+                        {m.isSelf && (
+                          <span className="text-xs text-gray-500 font-normal">
+                            (you)
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 font-normal mt-0.5 select-all">
+                        {m.email}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 break-all">
-                      {m.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm whitespace-nowrap">
                       <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 capitalize">
                         {m.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm whitespace-nowrap">
                       <StatusBadge status={m.status} />
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                       {formatDate(m.createdAt)}
                     </td>
-                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2 whitespace-nowrap">
                       {(m.status === "pending" || m.status === "expired") && (
                         <ResendButton userId={m.id} email={m.email} />
                       )}
