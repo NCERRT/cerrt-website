@@ -165,6 +165,26 @@ export default function Footer() {
                   Track an Incident
                 </Link>
               </li>
+              <li>
+                <a
+                  href="/documents/nitda-cerrt-pgp-public-key.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-foreground/80 cursor-pointer hover:text-primary-foreground text-sm transition-colors"
+                >
+                  PGP Public Key
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/documents/nitda-cerrt-rfc-2.0.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-foreground/80 cursor-pointer hover:text-primary-foreground text-sm transition-colors"
+                >
+                  RFC 2.0
+                </a>
+              </li>
             </ul>
           </div>
 

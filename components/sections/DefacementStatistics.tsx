@@ -12,18 +12,18 @@ import {
 } from "recharts";
 
 const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
   "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 interface DefacementStatisticsProps {
@@ -92,21 +92,23 @@ export default function DefacementStatistics({
         </div>
 
         {/* Chart */}
-        <div className="bg-white border-2 border-border rounded-2xl p-8">
+        <div className="bg-white border-2 border-border rounded-2xl p-3 sm:p-6 md:p-8">
           <ResponsiveContainer width="100%" height={400}>
             <BarChart
               data={currentData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 20, right: 8, left: -12, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="month"
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: "#6b7280", fontSize: 11 }}
                 axisLine={{ stroke: "#e5e7eb" }}
+                interval={0}
               />
               <YAxis
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: "#6b7280", fontSize: 11 }}
                 axisLine={{ stroke: "#e5e7eb" }}
+                width={32}
               />
               <Tooltip
                 contentStyle={{

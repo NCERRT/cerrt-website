@@ -14,6 +14,13 @@ import {
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { getAuditLogsAction, type AuditLogItem } from "@/app/actions/audit";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AuditLogsPage() {
   const { user, isLoading } = useAuth();
@@ -142,17 +149,21 @@ export default function AuditLogsPage() {
           <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
             Action Group:
           </label>
-          <select
+          <Select
             value={actionType}
-            onChange={(e) => handleFilterChange(e.target.value)}
-            className="flex h-10 w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            onValueChange={handleFilterChange}
           >
-            <option value="ALL">All Actions</option>
-            <option value="AUTH">Authentication (AUTH_*)</option>
-            <option value="USER">User Management (USER_*)</option>
-            <option value="SUBSCRIBERS">Subscriber Operations (SUBSCRIBERS_*)</option>
-            <option value="INCIDENT">Incident Actions (INCIDENT_*)</option>
-          </select>
+            <SelectTrigger className="w-[180px] sm:w-[240px]">
+              <SelectValue placeholder="All Actions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Actions</SelectItem>
+              <SelectItem value="AUTH">Authentication (AUTH_*)</SelectItem>
+              <SelectItem value="USER">User Management (USER_*)</SelectItem>
+              <SelectItem value="SUBSCRIBERS">Subscriber Operations (SUBSCRIBERS_*)</SelectItem>
+              <SelectItem value="INCIDENT">Incident Actions (INCIDENT_*)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

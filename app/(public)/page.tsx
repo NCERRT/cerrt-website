@@ -41,6 +41,17 @@ export default function Home() {
       .then((list) => setRecentAdvisories(list.slice(0, 3)))
       .catch(() => {});
   }, []);
+  const resources = [
+    {
+      title: "NITDA CERRT PGP PUBLIC KEY",
+      href: "/documents/nitda-cerrt-pgp-public-key.pdf",
+    },
+    {
+      title: "NITDA-CERRT RFC 2.0",
+      href: "/documents/nitda-cerrt-rfc-2.0.pdf",
+    },
+  ];
+
   const services = [
     {
       title: "Incident Response",
@@ -249,45 +260,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Statistics Section */}
-      <section className="py-20 bg-primary text-primary-foreground relative overflow-hidden">
-        {/* Decorative background */}
-        <div className="absolute inset-0 opacity-10 pattern-grid"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-serif">
-              Protecting Nigeria Since 2014
-            </h2>
-            <p className="text-primary-foreground/80 text-lg">
-              Our commitment to cybersecurity excellence in numbers
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {[
-              { value: "2014", label: "Established" },
-              { value: "24/7", label: "Monitoring" },
-            ].map((stat, index) => (
-              <div key={index} className="text-center group cursor-pointer">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-white/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 ease-out"></div>
-                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-8 py-10 group-hover:bg-white/20 group-hover:scale-[1.02] transition-all duration-500 ease-out">
-                    <div className="text-5xl md:text-6xl font-bold mb-3 group-hover:scale-105 transition-transform duration-500 ease-out">
-                      {stat.value}
-                    </div>
-                    <div className="text-primary-foreground/80 font-medium text-base uppercase tracking-wider">
-                      {stat.label}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Advisories section */}
       <section className="py-20 bg-secondary/30 pattern-dots relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -406,6 +378,61 @@ export default function Home() {
                 />
               </svg>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Resources */}
+      <section className="py-20 bg-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4 font-serif">
+              Resources
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Key documents and reference materials for CERRT stakeholders.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {resources.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive flex flex-col"
+              >
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">
+                    <HugeiconsIcon
+                      icon={Download01Icon}
+                      size={22}
+                      color="currentColor"
+                      className="text-primary group-hover:text-white transition-colors"
+                    />
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+                    {link.title}
+                  </h3>
+                </div>
+                <div className="inline-flex items-center text-primary font-semibold mt-auto group-hover:gap-3 transition-all">
+                  Read More
+                  <svg
+                    className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </section>
