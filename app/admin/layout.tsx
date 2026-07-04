@@ -14,6 +14,8 @@ import {
   Logout01Icon,
   Menu01Icon,
   Cancel01Icon,
+  MailAtSign02Icon,
+  UserGroupIcon,
 } from "@hugeicons/core-free-icons";
 
 export default function AdminLayout({
@@ -24,36 +26,44 @@ export default function AdminLayout({
   const { user, isLoading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [hasSessionCookie, setHasSessionCookie] = useState<boolean | null>(
-    null,
-  );
 
-  // Don't redirect if on login page
-  const isAuthPage = pathname === "/admin/login";
+  // Don't redirect if on an auth page (login, change-password, forgot/reset)
+  const isAuthPage =
+    pathname === "/admin/login" ||
+    pathname === "/admin/change-password" ||
+    pathname === "/admin/forgot-password" ||
+    pathname === "/admin/reset-password";
 
-  // Check if session cookie exists
+  // Redirect to login once we know there is no authenticated user
   useEffect(() => {
-    if (!isAuthPage) {
-      fetch("/api/auth/session")
-        .then((res) => res.json())
-        .then((data) => {
-          setHasSessionCookie(!!data.sessionId);
-        })
-        .catch(() => setHasSessionCookie(false));
-    }
-  }, [isAuthPage]);
-
-  // Redirect to login only if we're sure there's no session
-  useEffect(() => {
-    if (!isAuthPage && !isLoading && !user && hasSessionCookie === false) {
+    if (!isAuthPage && !isLoading && !user) {
       router.push("/admin/login");
     }
-  }, [user, isLoading, router, isAuthPage, hasSessionCookie]);
+  }, [user, isLoading, router, isAuthPage]);
 
-  // For login page, just render children without sidebar
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
+  // Force password change before accessing any admin page
+  useEffect(() => {
+    if (!isAuthPage && !isLoading && user?.mustChangePassword) {
+      router.push("/admin/change-password");
+    }
+  }, [user, isLoading, router, isAuthPage]);
+
+  // Redirect authenticated users away from login/reset pages
+  useEffect(() => {
+    if (isAuthPage && !isLoading && user) {
+      if (user.mustChangePassword && pathname !== "/admin/change-password") {
+        router.push("/admin/change-password");
+      } else if (!user.mustChangePassword) {
+        if (
+          pathname === "/admin/login" ||
+          pathname === "/admin/forgot-password" ||
+          pathname === "/admin/reset-password"
+        ) {
+          router.push("/admin");
+        }
+      }
+    }
+  }, [user, isLoading, router, isAuthPage, pathname]);
 
   // Show loading while checking auth
   if (isLoading) {
@@ -64,9 +74,40 @@ export default function AdminLayout({
     );
   }
 
-  // Don't render dashboard if not authenticated
-  if (!user) {
-    return null;
+  // If not on an auth page and there is no user, we are redirecting to login. Show loading spinner instead of flashing layout.
+  if (!isAuthPage && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If not on an auth page and user must change password, we are redirecting to change-password. Show loading spinner instead of flashing the dashboard.
+  if (!isAuthPage && user?.mustChangePassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If authenticated user is on an auth page that they shouldn't be on (e.g. login page, but they are logged in), show loading spinner while redirecting.
+  if (isAuthPage && user) {
+    if (pathname === "/admin/change-password" && user.mustChangePassword) {
+      // Allow rendering the change-password page
+    } else {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+  }
+
+  // For login page, just render children without sidebar
+  if (isAuthPage) {
+    return <>{children}</>;
   }
 
   const handleSignOut = async () => {
@@ -74,17 +115,34 @@ export default function AdminLayout({
     router.push("/admin/login");
   };
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <AdminDashboard handleSignOut={handleSignOut}>{children}</AdminDashboard>
+    <AdminDashboard
+      handleSignOut={handleSignOut}
+      userName={user.name}
+      userEmail={user.email}
+      userRole={user.role}
+    >
+      {children}
+    </AdminDashboard>
   );
 }
 
 function AdminDashboard({
   children,
   handleSignOut,
+  userName,
+  userEmail,
+  userRole,
 }: {
   children: React.ReactNode;
   handleSignOut: () => Promise<void>;
+  userName: string;
+  userEmail: string;
+  userRole: string;
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -110,6 +168,21 @@ function AdminDashboard({
       label: "Incident Reports",
       icon: Alert02Icon,
     },
+    {
+      href: "/admin/subscribers",
+      label: "Subscribers",
+      icon: MailAtSign02Icon,
+    },
+    // Team management is superadmin-only
+    ...(userRole === "superadmin"
+      ? [
+          {
+            href: "/admin/team",
+            label: "Team",
+            icon: UserGroupIcon,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -206,7 +279,13 @@ function AdminDashboard({
             })}
           </nav>
 
-          <div className="absolute bottom-4 left-0 right-0 px-3">
+          <div className="absolute bottom-4 left-0 right-0 px-3 space-y-2">
+            <div className="px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200">
+              <div className="text-sm font-semibold text-gray-900 truncate">
+                {userName}
+              </div>
+              <div className="text-xs text-gray-500 truncate">{userEmail}</div>
+            </div>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"

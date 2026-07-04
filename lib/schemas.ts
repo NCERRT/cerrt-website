@@ -184,6 +184,13 @@ export const signInSchema = z.object({
 });
 
 // ============================================================
+// Subscribe Schema
+// ============================================================
+export const subscribeSchema = z.object({
+  email: emailSchema,
+});
+
+// ============================================================
 // Helper: Format Zod errors for user display
 // ============================================================
 export function formatZodError(error: z.ZodError): string {

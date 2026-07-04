@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, CancelCircleIcon } from "@hugeicons/core-free-icons";
 import { incidentReportSchema, formatZodError } from "@/lib/schemas";
+import { submitIncidentReportAction } from "@/app/actions/incidentReports";
 
 interface ReportIncidentModalProps {
   isOpen: boolean;
@@ -16,8 +15,6 @@ export default function ReportIncidentModal({
   isOpen,
   onClose,
 }: ReportIncidentModalProps) {
-  const submitReport = useMutation(api.incidentReports.submit);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -33,6 +30,8 @@ export default function ReportIncidentModal({
     "idle"
   );
   const [validationError, setValidationError] = useState<string>("");
+  const [trackingCode, setTrackingCode] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -67,29 +66,44 @@ export default function ReportIncidentModal({
     setSubmitStatus("idle");
 
     try {
-      await submitReport(parseResult.data);
+      const result = await submitIncidentReportAction(parseResult.data);
 
+      setTrackingCode(result.trackingCode);
       setSubmitStatus("success");
-
-      // Reset form after 2 seconds
-      setTimeout(() => {
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          organization: "",
-          incidentType: "security-breach",
-          severity: "high",
-          description: "",
-        });
-        setSubmitStatus("idle");
-        onClose();
-      }, 2000);
+      // Don't auto-close — the user needs to copy the tracking code first.
     } catch (error) {
       console.error("Error submitting report:", error);
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (submitStatus === "success") {
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        organization: "",
+        incidentType: "security-breach",
+        severity: "high",
+        description: "",
+      });
+      setSubmitStatus("idle");
+      setTrackingCode("");
+      setCopied(false);
+    }
+    onClose();
+  };
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(trackingCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard might be blocked — code is still visible on-screen
     }
   };
 
@@ -99,7 +113,7 @@ export default function ReportIncidentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
       <div
         className="fixed inset-0"
-        onClick={onClose}
+        onClick={handleClose}
         aria-label="Close modal"
       />
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 max-h-[calc(100vh-4rem)] overflow-y-auto border border-border animate-slide-in-up"
@@ -127,7 +141,7 @@ export default function ReportIncidentModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2.5 hover:bg-muted rounded-full transition-all hover:rotate-90 hover:scale-110"
             aria-label="Close"
           >
@@ -157,6 +171,7 @@ export default function ReportIncidentModal({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {submitStatus !== "success" && (<>
             {/* Contact Information */}
             <div className="space-y-4">
               <h3 className="font-semibold text-foreground">Contact Information</h3>
@@ -319,6 +334,7 @@ export default function ReportIncidentModal({
                 </p>
               </div>
             </div>
+            </>)}
 
             {/* Submit Status */}
             {validationError && (
@@ -328,8 +344,40 @@ export default function ReportIncidentModal({
             )}
 
             {submitStatus === "success" && (
-              <div className="p-4 bg-success/10 border border-success/30 rounded-md text-success text-sm">
-                ✓ Incident reported successfully! Our team will contact you shortly.
+              <div className="p-6 bg-success/10 border-2 border-success/30 rounded-xl space-y-4">
+                <div className="text-success font-semibold flex items-center gap-2">
+                  ✓ Incident reported successfully
+                </div>
+                <p className="text-sm text-foreground/80">
+                  Save your tracking code below — you&apos;ll use it (with the
+                  email you provided) to check the status of your report at any
+                  time.
+                </p>
+                <div className="bg-white rounded-lg border-2 border-success/40 p-4">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                    Your tracking code
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <code className="flex-1 font-mono text-lg sm:text-xl font-bold text-foreground select-all break-all">
+                      {trackingCode}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={copyCode}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
+                    >
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+                <a
+                  href="/track"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  Track your report →
+                </a>
               </div>
             )}
 
@@ -340,32 +388,44 @@ export default function ReportIncidentModal({
             )}
 
             {/* Actions */}
-            <div className="flex gap-4 pt-6 border-t border-border">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-6 py-3 border-2 border-border text-foreground font-bold rounded-lg hover:bg-muted hover:border-primary transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="group flex-1 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-              >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {isSubmitting ? "Submitting..." : "Submit Report"}
+            {submitStatus === "success" ? (
+              <div className="flex pt-6 border-t border-border">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/90 transition-all"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-4 pt-6 border-t border-border">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 px-6 py-3 border-2 border-border text-foreground font-bold rounded-lg hover:bg-muted hover:border-primary transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group flex-1 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {isSubmitting ? "Submitting..." : "Submit Report"}
+                    {!isSubmitting && (
+                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    )}
+                  </span>
                   {!isSubmitting && (
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
+                    <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                   )}
-                </span>
-                {!isSubmitting && (
-                  <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                )}
-              </button>
-            </div>
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </div>

@@ -1,8 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -18,10 +16,22 @@ import {
   IdentificationIcon,
 } from "@hugeicons/core-free-icons";
 import Carousel from "@/components/ui/Carousel";
+import {
+  getAdvisoriesAction,
+  type AdvisoryWithFileUrl,
+} from "@/app/actions/advisories";
+import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 
 export default function KidsAdvisoryPage() {
-  const advisories = useQuery(api.advisories.list, { category: "kids" });
-  const allAdvisories = useQuery(api.advisories.list, { category: "kids" });
+  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+    null,
+  );
+
+  useEffect(() => {
+    getAdvisoriesAction("kids")
+      .then(setAdvisories)
+      .catch(() => setAdvisories([]));
+  }, []);
 
   const safetyTips = [
     {
@@ -64,29 +74,26 @@ export default function KidsAdvisoryPage() {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-NG", {
       year: "numeric",
       month: "long",
       day: "numeric",
     }).format(date);
   };
-  // Gallery images - Start with static hero images
-  const staticImages = [
+
+  // Gallery images — static hero images
+  const galleryImages = [
     "/hero-images/NITDA25-CHD-AWARENESS-1.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-2.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-4.jpg",
     "/hero-images/NITDA25-CHD-AWARENESS-6.jpg",
   ];
 
-  // Get image advisories for gallery
-  const imageAdvisories = allAdvisories?.filter(
-    (advisory) => advisory.fileType === "image" && advisory.fileStorageId
-  ) || [];
-
-  // Combine static images with advisory images (we'll need to get URLs for advisory images)
-  const galleryImages = staticImages;
+  // Image-type advisories shown in the gallery grid
+  const imageAdvisories = (advisories ?? []).filter(
+    (advisory) => advisory.fileType === "image" && advisory.fileUrl,
+  );
 
   return (
     <main className="flex flex-col">
@@ -200,11 +207,7 @@ export default function KidsAdvisoryPage() {
                 <h3 className="text-2xl font-bold text-foreground mb-8 text-center">
                   Safety Posters & Graphics
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {imageAdvisories.map((advisory) => (
-                    <ImageAdvisoryCard key={advisory._id} advisory={advisory} />
-                  ))}
-                </div>
+                <AdvisoryImageGrid advisories={imageAdvisories} />
               </div>
             )}
           </div>
@@ -240,9 +243,11 @@ export default function KidsAdvisoryPage() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {advisories.map((advisory, index) => (
+              {advisories
+                .filter((a) => a.fileType !== "image")
+                .map((advisory, index) => (
                 <KidsAdvisoryCard
-                  key={advisory._id}
+                  key={advisory.id}
                   advisory={advisory}
                   index={index}
                   getSeverityColor={getSeverityColor}
@@ -349,27 +354,12 @@ function KidsAdvisoryCard({
   getSeverityColor,
   formatDate,
 }: {
-  advisory: {
-    _id: string;
-    title: string;
-    description: string;
-    severity: string;
-    advisoryId: string;
-    date: number;
-    fileStorageId?: string;
-    fileType?: string;
-  };
+  advisory: AdvisoryWithFileUrl;
   index: number;
   getSeverityColor: (severity: string) => string;
-  formatDate: (timestamp: number) => string;
+  formatDate: (date: Date) => string;
 }) {
-  // Always call the hook, but pass "skip" if no fileStorageId
-  const fileUrl = useQuery(
-    api.advisories.getFileUrl,
-    advisory.fileStorageId
-      ? { storageId: advisory.fileStorageId as Id<"_storage"> }
-      : "skip",
-  );
+  const fileUrl = advisory.fileUrl;
 
   return (
     <article
@@ -450,47 +440,3 @@ function KidsAdvisoryCard({
   );
 }
 
-function ImageAdvisoryCard({
-  advisory,
-}: {
-  advisory: {
-    _id: string;
-    title: string;
-    fileStorageId?: string;
-    fileType?: string;
-  };
-}) {
-  const fileUrl = useQuery(
-    api.advisories.getFileUrl,
-    advisory.fileStorageId
-      ? { storageId: advisory.fileStorageId as Id<"_storage"> }
-      : "skip",
-  );
-
-  if (!fileUrl) return null;
-
-  return (
-    <div className="group relative aspect-square rounded-xl overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover-lift">
-      <Image
-        src={fileUrl}
-        alt={advisory.title}
-        fill
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h4 className="text-white font-bold text-sm line-clamp-2">
-            {advisory.title}
-          </h4>
-        </div>
-      </div>
-      <a
-        href={fileUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute inset-0"
-        aria-label={`View ${advisory.title}`}
-      />
-    </div>
-  );
-}

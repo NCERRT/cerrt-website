@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/useAuth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon } from "@hugeicons/core-free-icons";
+import PasswordField from "@/components/sections/PasswordField";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -81,9 +83,8 @@ export default function AdminLogin() {
               >
                 Password
               </label>
-              <input
+              <PasswordField
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -105,6 +106,15 @@ export default function AdminLogin() {
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
+
+            <div className="text-center">
+              <Link
+                href="/admin/forgot-password"
+                className="text-sm text-primary hover:underline font-semibold"
+              >
+                Forgot your password?
+              </Link>
+            </div>
           </form>
 
           <p className="text-center text-sm text-gray-600 mt-6">

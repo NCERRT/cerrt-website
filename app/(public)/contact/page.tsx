@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { contactFormSchema, formatZodError } from "@/lib/schemas";
+import { submitContactAction } from "@/app/actions/contactSubmissions";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Call02Icon,
@@ -24,8 +23,6 @@ type InquiryType =
   | "partnership";
 
 export default function ContactPage() {
-  const submitContact = useMutation(api.contactSubmissions.submit);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -76,7 +73,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      await submitContact({
+      await submitContactAction({
         inquiryType: parseResult.data.inquiryType,
         name: parseResult.data.name,
         email: parseResult.data.email,

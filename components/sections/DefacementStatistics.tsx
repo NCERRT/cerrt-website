@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import {
   BarChart,
   Bar,
@@ -28,19 +26,23 @@ const MONTHS = [
   "December",
 ];
 
-export default function DefacementStatistics() {
-  const statsData = useQuery(api.defacementStats.list, {});
-  const years = useQuery(api.defacementStats.getYears, {});
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+interface DefacementStatisticsProps {
+  /** Stats grouped by year, e.g. { 2026: [{ month: 1, incidents: 4 }, ...] } */
+  statsByYear: Record<number, { month: number; incidents: number }[]>;
+  /** Available years, sorted descending */
+  years: number[];
+}
 
-  // Transform Convex data to chart format
+export default function DefacementStatistics({
+  statsByYear,
+  years,
+}: DefacementStatisticsProps) {
+  const displayYears = years.length > 0 ? years : [new Date().getFullYear()];
+  const [selectedYear, setSelectedYear] = useState(displayYears[0]);
+
+  // Build a complete 12-month dataset for the selected year
   const getYearData = (year: number) => {
-    if (!statsData || typeof statsData !== "object" || Array.isArray(statsData)) {
-      return MONTHS.map((month) => ({ month, incidents: 0 }));
-    }
-
-    const yearStats = (statsData as Record<number, Array<{ month: number; incidents: number }>>)[year] || [];
-
+    const yearStats = statsByYear[year] || [];
     return MONTHS.map((month, index) => {
       const stat = yearStats.find((s) => s.month === index + 1);
       return {
@@ -51,23 +53,6 @@ export default function DefacementStatistics() {
   };
 
   const currentData = getYearData(selectedYear);
-  const displayYears = years || [new Date().getFullYear()];
-
-  // Loading state
-  if (!statsData || !years) {
-    return (
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-8 font-serif text-primary">
-              Defacement Statistics
-            </h2>
-            <p className="text-muted-foreground">Loading statistics...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="py-20 bg-white">

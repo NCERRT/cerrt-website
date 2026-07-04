@@ -1,0 +1,94 @@
+services:
+  # PostgreSQL — main database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cerrt-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cerrt
+      POSTGRES_PASSWORD: cerrt_dev_password
+      POSTGRES_DB: cerrt
+    ports:
+      # Host port 5433 to avoid clashing with a natively-installed PostgreSQL
+      - "5433:5432"
+    volumes:
+      - cerrt-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cerrt -d cerrt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis — rate limiting store
+  redis:
+    image: redis:7-alpine
+    container_name: cerrt-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - cerrt-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO — S3-compatible file storage (advisory PDFs/images)
+  minio:
+    image: minio/minio:latest
+    container_name: cerrt-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: cerrt_minio
+      MINIO_ROOT_PASSWORD: cerrt_minio_dev_password
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Web console
+    volumes:
+      - cerrt-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin — PostgreSQL web UI (development convenience)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cerrt-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: cerrt@nitda.gov.ng
+      PGADMIN_DEFAULT_PASSWORD: cerrt_dev_password
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - cerrt-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # One-shot job: creates the storage bucket on first run
+  minio-setup:
+    image: minio/mc:latest
+    container_name: cerrt-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 cerrt_minio cerrt_minio_dev_password;
+      mc mb --ignore-existing local/cerrt-advisories;
+      mc anonymous set none local/cerrt-advisories;
+      echo 'MinIO bucket ready';
+      "
+
+volumes:
+  cerrt-postgres-data:
+  cerrt-redis-data:
+  cerrt-minio-data:
+  cerrt-pgadmin-data:

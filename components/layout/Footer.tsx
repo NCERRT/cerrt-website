@@ -8,6 +8,7 @@ import {
   InstagramIcon,
   YoutubeIcon,
 } from "@hugeicons/core-free-icons";
+import SubscribeForm from "@/components/ui/SubscribeForm";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -156,6 +157,14 @@ export default function Footer() {
                   Kids Advisory
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/track"
+                  className="text-primary-foreground/80 cursor-pointer hover:text-primary-foreground text-sm transition-colors"
+                >
+                  Track an Incident
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -190,19 +199,7 @@ export default function Footer() {
             <p className="text-primary-foreground/80 text-sm mb-4">
               Get the latest security alerts delivered to your inbox
             </p>
-            <form className="flex gap-2">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="flex-1 px-3 py-2 rounded-md bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary-foreground/30"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 cursor-pointer bg-primary-foreground text-primary rounded-md font-semibold text-sm hover:bg-primary-foreground/90 transition-colors"
-              >
-                Submit
-              </button>
-            </form>
+            <SubscribeForm variant="footer" />
           </div>
         </div>
       </div>

@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { resolveStorageConfig } from "./lib/storageEndpoint";
+
+const storage = resolveStorageConfig();
 
 const nextConfig: NextConfig = {
   // Strip all console.* calls from production bundle (prevent info leakage to users)
@@ -9,16 +12,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        port: "",
-        pathname: "/**",
-      },
-      // Allow Convex storage for advisory files
-      {
-        protocol: "https",
-        hostname: "*.convex.cloud",
-        port: "",
+        protocol: storage.protocol,
+        hostname: storage.hostname,
+        port: storage.port,
         pathname: "/**",
       },
     ],
@@ -35,11 +31,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.convex.cloud https://*.convex.site",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://*.convex.cloud https://images.unsplash.com",
+              `img-src 'self' data: blob: ${storage.origin}`,
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud",
+              `connect-src 'self' ${storage.origin}`,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

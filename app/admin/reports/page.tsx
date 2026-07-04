@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/lib/useAuth";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,38 +21,41 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, CheckmarkCircle02Icon, Clock01Icon } from "@hugeicons/core-free-icons";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { IncidentReport, IncidentStatus } from "@prisma/client";
+import {
+  getIncidentReportsAction,
+  getIncidentStatsAction,
+  updateIncidentStatusAction,
+} from "@/app/actions/incidentReports";
 
 export default function ReportsPage() {
-  const { sessionId } = useAuth();
-  const [statusFilter, setStatusFilter] = useState<
-    "new" | "reviewing" | "resolved" | "closed" | undefined
-  >(undefined);
-  const reports = useQuery(
-    api.incidentReports.list,
-    sessionId
-      ? statusFilter
-        ? { sessionId, status: statusFilter }
-        : { sessionId }
-      : "skip",
+  const [statusFilter, setStatusFilter] = useState<IncidentStatus | undefined>(
+    undefined,
   );
-  const stats = useQuery(
-    api.incidentReports.getStats,
-    sessionId ? { sessionId } : "skip",
-  );
-  const [selectedReport, setSelectedReport] = useState<{
-    _id: Id<"incidentReports">;
-    type: string;
-    description: string;
-    status: "new" | "reviewing" | "resolved" | "closed";
-    submittedAt: number;
-    contactName?: string;
-    contactEmail?: string;
-    contactPhone?: string;
-    organization?: string;
-    severity?: string;
-    notes?: string;
+  const [reports, setReports] = useState<IncidentReport[] | null>(null);
+  const [stats, setStats] = useState<{
+    total: number;
+    new: number;
+    reviewing: number;
+    resolved: number;
+    closed: number;
   } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<IncidentReport | null>(
+    null,
+  );
+
+  const loadData = useCallback(() => {
+    getIncidentReportsAction(statusFilter)
+      .then(setReports)
+      .catch(() => setReports([]));
+    getIncidentStatsAction()
+      .then(setStats)
+      .catch(() => {});
+  }, [statusFilter]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const statusCounts = [
     { label: "All", value: undefined, count: stats?.total || 0, icon: Alert02Icon, color: "bg-gray-500" },
@@ -134,7 +135,7 @@ export default function ReportsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {reports?.map((report) => (
-                <tr key={report._id} className="hover:bg-gray-50">
+                <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <span className="text-sm font-medium text-gray-900">
                       {report.type}
@@ -216,6 +217,7 @@ export default function ReportsPage() {
             <ReportDetails
               report={selectedReport}
               onClose={() => setSelectedReport(null)}
+              onSaved={loadData}
             />
           </DialogContent>
         </Dialog>
@@ -227,46 +229,25 @@ export default function ReportsPage() {
 function ReportDetails({
   report,
   onClose,
+  onSaved,
 }: {
-  report: {
-    _id: Id<"incidentReports">;
-    type: string;
-    description: string;
-    status: "new" | "reviewing" | "resolved" | "closed";
-    submittedAt: number;
-    contactName?: string;
-    contactEmail?: string;
-    contactPhone?: string;
-    organization?: string;
-    severity?: string;
-    notes?: string;
-  };
+  report: IncidentReport;
   onClose: () => void;
+  onSaved: () => void;
 }) {
-  const { user, sessionId } = useAuth();
-  const [status, setStatus] = useState<"new" | "reviewing" | "resolved" | "closed">(report.status);
+  const [status, setStatus] = useState<IncidentStatus>(report.status);
   const [notes, setNotes] = useState(report.notes || "");
   const [saving, setSaving] = useState(false);
 
-  const updateStatus = useMutation(api.incidentReports.updateStatus);
-
   const handleSave = async () => {
-    if (!user || !sessionId) {
-      alert("Session expired. Please log in again.");
-      return;
-    }
     setSaving(true);
     try {
-      await updateStatus({
-        id: report._id,
-        status,
-        sessionId,
-        notes: notes || undefined,
-      });
+      await updateIncidentStatusAction(report.id, status, notes || undefined);
+      toast.success("Report updated successfully");
+      onSaved();
       onClose();
     } catch (error) {
-      console.error("Error updating report:", error);
-      alert("Failed to update report");
+      toast.error((error as Error).message || "Failed to update report");
     } finally {
       setSaving(false);
     }

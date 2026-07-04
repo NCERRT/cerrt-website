@@ -1,8 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/lib/useAuth";
+import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FileScriptIcon,
@@ -10,19 +8,36 @@ import {
   ChartLineData01Icon,
   ArrowUpRight01Icon,
 } from "@hugeicons/core-free-icons";
+import { getAdvisoriesAction } from "@/app/actions/advisories";
+import { getIncidentStatsAction } from "@/app/actions/incidentReports";
+
+interface IncidentStats {
+  total: number;
+  new: number;
+  reviewing: number;
+  resolved: number;
+  closed: number;
+}
 
 export default function AdminDashboard() {
-  const { sessionId } = useAuth();
-  const incidentStats = useQuery(
-    api.incidentReports.getStats,
-    sessionId ? { sessionId } : "skip",
+  const [advisoryCount, setAdvisoryCount] = useState(0);
+  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(
+    null,
   );
-  const advisories = useQuery(api.advisories.list, {});
+
+  useEffect(() => {
+    getAdvisoriesAction()
+      .then((a) => setAdvisoryCount(a.length))
+      .catch(() => {});
+    getIncidentStatsAction()
+      .then(setIncidentStats)
+      .catch(() => {});
+  }, []);
 
   const stats = [
     {
       label: "Total Advisories",
-      value: advisories?.length || 0,
+      value: advisoryCount,
       icon: FileScriptIcon,
       color: "bg-blue-500",
     },

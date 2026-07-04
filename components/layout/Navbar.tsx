@@ -175,8 +175,14 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* CTA Button */}
-            <div className="hidden md:block">
+            {/* CTA Buttons */}
+            <div className="hidden md:flex items-center gap-3">
+              <Link
+                href="/track"
+                className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                Track Report
+              </Link>
               <button
                 onClick={() => setIsReportModalOpen(true)}
                 className="group cursor-pointer relative inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:bg-primary-light hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
@@ -305,12 +311,19 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+              <Link
+                href="/track"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full mt-4 px-6 py-3 border-2 border-border text-foreground font-bold rounded-lg text-center hover:border-primary hover:text-primary transition-all"
+              >
+                Track Report
+              </Link>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setIsReportModalOpen(true);
                 }}
-                className="group cursor-pointer block w-full mt-4 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-lg text-center hover:bg-primary-light hover:shadow-lg transition-all relative overflow-hidden"
+                className="group cursor-pointer block w-full mt-3 px-6 py-3 bg-primary text-primary-foreground font-bold rounded-lg text-center hover:bg-primary-light hover:shadow-lg transition-all relative overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   REPORT INCIDENT

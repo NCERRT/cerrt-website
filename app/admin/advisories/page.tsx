@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/lib/useAuth";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,23 +23,38 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, Edit01Icon, Delete01Icon, FileScriptIcon } from "@hugeicons/core-free-icons";
-import type { Id } from "@/convex/_generated/dataModel";
+import {
+  Add01Icon,
+  Edit01Icon,
+  Delete01Icon,
+  FileScriptIcon,
+} from "@hugeicons/core-free-icons";
 import { validateFile } from "@/lib/fileValidation";
+import {
+  getAdvisoriesAction,
+  createAdvisoryAction,
+  updateAdvisoryAction,
+  deleteAdvisoryAction,
+  type AdvisoryWithFileUrl,
+} from "@/app/actions/advisories";
 
 export default function AdvisoriesPage() {
-  const { user, sessionId } = useAuth();
-  const advisories = useQuery(api.advisories.list, {});
+  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+    null,
+  );
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingAdvisory, setEditingAdvisory] = useState<{
-    _id: Id<"advisories">;
-    title: string;
-    description: string;
-    category: string;
-    severity: string;
-    advisoryId: string;
-    fileName?: string;
-  } | null>(null);
+  const [editingAdvisory, setEditingAdvisory] =
+    useState<AdvisoryWithFileUrl | null>(null);
+
+  const loadData = useCallback(() => {
+    getAdvisoriesAction()
+      .then(setAdvisories)
+      .catch(() => setAdvisories([]));
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return (
     <div>
@@ -64,12 +78,12 @@ export default function AdvisoriesPage() {
             <DialogHeader>
               <DialogTitle>Create New Advisory</DialogTitle>
             </DialogHeader>
-            {user && sessionId && (
-              <AdvisoryForm
-                onSuccess={() => setIsCreateOpen(false)}
-                sessionId={sessionId}
-              />
-            )}
+            <AdvisoryForm
+              onSuccess={() => {
+                setIsCreateOpen(false);
+                loadData();
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -102,14 +116,19 @@ export default function AdvisoriesPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {advisories?.map((advisory) => (
-                <tr key={advisory._id} className="hover:bg-gray-50">
+                <tr key={advisory.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-primary">
                     {advisory.advisoryId}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       {advisory.fileType && (
-                        <HugeiconsIcon icon={FileScriptIcon} size={16} color="currentColor" className="text-gray-400" />
+                        <HugeiconsIcon
+                          icon={FileScriptIcon}
+                          size={16}
+                          color="currentColor"
+                          className="text-gray-400"
+                        />
                       )}
                       <span className="text-sm font-medium text-gray-900">
                         {advisory.title}
@@ -140,9 +159,16 @@ export default function AdvisoriesPage() {
                         size="sm"
                         onClick={() => setEditingAdvisory(advisory)}
                       >
-                        <HugeiconsIcon icon={Edit01Icon} size={16} color="currentColor" />
+                        <HugeiconsIcon
+                          icon={Edit01Icon}
+                          size={16}
+                          color="currentColor"
+                        />
                       </Button>
-                      <DeleteButton advisoryId={advisory._id} />
+                      <DeleteButton
+                        advisoryId={advisory.id}
+                        onDeleted={loadData}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -153,7 +179,9 @@ export default function AdvisoriesPage() {
 
         {advisories?.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No advisories yet. Create one to get started.</p>
+            <p className="text-gray-500">
+              No advisories yet. Create one to get started.
+            </p>
           </div>
         )}
       </div>
@@ -168,13 +196,13 @@ export default function AdvisoriesPage() {
             <DialogHeader>
               <DialogTitle>Edit Advisory</DialogTitle>
             </DialogHeader>
-            {user && sessionId && (
-              <AdvisoryForm
-                advisory={editingAdvisory}
-                onSuccess={() => setEditingAdvisory(null)}
-                sessionId={sessionId}
-              />
-            )}
+            <AdvisoryForm
+              advisory={editingAdvisory}
+              onSuccess={() => {
+                setEditingAdvisory(null);
+                loadData();
+              }}
+            />
           </DialogContent>
         </Dialog>
       )}
@@ -185,19 +213,9 @@ export default function AdvisoriesPage() {
 function AdvisoryForm({
   advisory,
   onSuccess,
-  sessionId,
 }: {
-  advisory?: {
-    _id: Id<"advisories">;
-    title: string;
-    description: string;
-    category: string;
-    severity: string;
-    advisoryId: string;
-    fileName?: string;
-  };
+  advisory?: AdvisoryWithFileUrl;
   onSuccess: () => void;
-  sessionId: Id<"sessions">;
 }) {
   const [formData, setFormData] = useState<{
     title: string;
@@ -208,30 +226,32 @@ function AdvisoryForm({
   }>({
     title: advisory?.title || "",
     description: advisory?.description || "",
-    category: (advisory?.category as "general" | "individuals" | "organizations" | "kids") || "general",
-    severity: (advisory?.severity as "critical" | "high" | "medium" | "low") || "medium",
+    category:
+      (advisory?.category as
+        | "general"
+        | "individuals"
+        | "organizations"
+        | "kids") || "general",
+    severity:
+      (advisory?.severity as "critical" | "high" | "medium" | "low") ||
+      "medium",
     advisoryId: advisory?.advisoryId || "",
   });
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [fileError, setFileError] = useState("");
 
-  const createAdvisory = useMutation(api.advisories.create);
-  const updateAdvisory = useMutation(api.advisories.update);
-  const generateUploadUrl = useMutation(api.advisories.generateUploadUrl);
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     setFileError("");
 
     if (selectedFile) {
-      // Comprehensive validation with magic number verification
+      // Comprehensive validation with magic-number verification
       const validation = await validateFile(selectedFile);
-
       if (!validation.valid) {
         setFileError(validation.error || "Invalid file");
         setFile(null);
-        e.target.value = ""; // Reset input
+        e.target.value = "";
         return;
       }
     }
@@ -243,72 +263,52 @@ function AdvisoryForm({
     e.preventDefault();
 
     if (fileError) {
-      alert("Please fix file errors before submitting");
+      toast.error("Please fix file errors before submitting");
       return;
     }
 
     setUploading(true);
 
     try {
-      let fileStorageId: Id<"_storage"> | undefined;
-      let fileType: "pdf" | "image" | undefined;
-      let fileName: string | undefined;
-      let fileSize: number | undefined;
+      let fileMeta:
+        | {
+            fileKey: string;
+            fileType: "pdf" | "image";
+            fileName: string;
+            fileSize: number;
+          }
+        | undefined;
 
-      // Upload file if provided
+      // Upload the file (if any) via the validated upload route
       if (file) {
-        // Re-validate file at upload time (defense in depth)
         const validation = await validateFile(file);
         if (!validation.valid || !validation.fileType) {
           throw new Error(validation.error || "Invalid file type");
         }
 
-        if (!sessionId) {
-          throw new Error("Session expired. Please log in again.");
-        }
-
-        const uploadUrl = await generateUploadUrl({ sessionId });
-        const result = await fetch(uploadUrl, {
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        const res = await fetch("/api/advisories/upload", {
           method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
+          body: uploadData,
         });
-        const { storageId } = await result.json();
-        fileStorageId = storageId;
-        fileType = validation.fileType;
-        fileName = validation.sanitizedFileName; // Use sanitized filename
-        fileSize = file.size;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "File upload failed");
+        }
+        fileMeta = await res.json();
       }
 
       if (advisory) {
-        // Update existing
-        await updateAdvisory({
-          id: advisory._id,
-          ...formData,
-          sessionId,
-          ...(fileStorageId && {
-            fileStorageId,
-            fileType,
-            fileName,
-            fileSize,
-          }),
-        });
+        await updateAdvisoryAction(advisory.id, { ...formData, file: fileMeta });
       } else {
-        // Create new
-        await createAdvisory({
-          ...formData,
-          fileStorageId,
-          fileType,
-          fileName,
-          fileSize,
-          sessionId,
-        });
+        await createAdvisoryAction({ ...formData, file: fileMeta });
       }
 
+      toast.success("Advisory saved successfully");
       onSuccess();
     } catch (error) {
-      console.error("Error saving advisory:", error);
-      alert("Failed to save advisory");
+      toast.error((error as Error).message || "Failed to save advisory");
     } finally {
       setUploading(false);
     }
@@ -343,7 +343,14 @@ function AdvisoryForm({
           <Select
             value={formData.category}
             onValueChange={(value) =>
-              setFormData({ ...formData, category: value as "general" | "individuals" | "organizations" | "kids" })
+              setFormData({
+                ...formData,
+                category: value as
+                  | "general"
+                  | "individuals"
+                  | "organizations"
+                  | "kids",
+              })
             }
           >
             <SelectTrigger>
@@ -364,9 +371,7 @@ function AdvisoryForm({
         <Input
           id="title"
           value={formData.title}
-          onChange={(e) =>
-            setFormData({ ...formData, title: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           maxLength={200}
           required
         />
@@ -397,7 +402,10 @@ function AdvisoryForm({
         <Select
           value={formData.severity}
           onValueChange={(value) =>
-            setFormData({ ...formData, severity: value as "critical" | "high" | "medium" | "low" })
+            setFormData({
+              ...formData,
+              severity: value as "critical" | "high" | "medium" | "low",
+            })
           }
         >
           <SelectTrigger>
@@ -423,9 +431,7 @@ function AdvisoryForm({
         <p className="text-xs text-gray-500 mt-1">
           PDF: max 10MB | Images (JPEG, PNG, WebP, GIF): max 5MB
         </p>
-        {fileError && (
-          <p className="text-xs text-red-600 mt-1">{fileError}</p>
-        )}
+        {fileError && <p className="text-xs text-red-600 mt-1">{fileError}</p>}
         {advisory?.fileName && !file && (
           <p className="text-sm text-gray-600 mt-1">
             Current file: {advisory.fileName}
@@ -445,24 +451,32 @@ function AdvisoryForm({
   );
 }
 
-function DeleteButton({ advisoryId }: { advisoryId: Id<"advisories"> }) {
-  const { sessionId } = useAuth();
-  const deleteAdvisory = useMutation(api.advisories.remove);
+function DeleteButton({
+  advisoryId,
+  onDeleted,
+}: {
+  advisoryId: string;
+  onDeleted: () => void;
+}) {
   const [deleting, setDeleting] = useState(false);
+  const confirm = useConfirm();
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this advisory?")) return;
-    if (!sessionId) {
-      alert("Session expired. Please log in again.");
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete advisory?",
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
 
     setDeleting(true);
     try {
-      await deleteAdvisory({ id: advisoryId, sessionId });
+      await deleteAdvisoryAction(advisoryId);
+      toast.success("Advisory deleted");
+      onDeleted();
     } catch (error) {
-      console.error("Error deleting advisory:", error);
-      alert("Failed to delete advisory");
+      toast.error((error as Error).message || "Failed to delete advisory");
     } finally {
       setDeleting(false);
     }

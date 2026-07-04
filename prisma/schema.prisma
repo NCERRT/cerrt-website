@@ -1,0 +1,194 @@
+// CERRT database schema
+// Migrated from Convex. See MIGRATION_PLAN.md for context.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum AdvisoryCategory {
+  individuals
+  organizations
+  kids
+  general
+}
+
+enum Severity {
+  critical
+  high
+  medium
+  low
+}
+
+enum FileType {
+  pdf
+  image
+}
+
+enum IncidentStatus {
+  new
+  reviewing
+  resolved
+  closed
+}
+
+enum InquiryType {
+  general
+  incident
+  advisory
+  training
+  partnership
+}
+
+enum ContactStatus {
+  new
+  read
+  responded
+  closed
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+model User {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String
+  passwordHash          String
+  mustChangePassword    Boolean   @default(false)
+  role                  String    @default("admin") // "superadmin" | "admin"
+  isDeactivated         Boolean   @default(false)   // ← NEW: account suspension
+  tempPasswordExpiresAt DateTime? // null = no temp password; set when invited
+  createdById           String?   // null = seeded via CLI
+  createdAt             DateTime  @default(now())
+
+  sessions            Session[]
+  advisories          Advisory[]
+  defacementStats     DefacementStat[]
+  reviewedReports     IncidentReport[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Advisory {
+  id          String           @id @default(cuid())
+  title       String
+  description String
+  category    AdvisoryCategory
+  severity    Severity
+  advisoryId  String           @unique // business identifier, e.g. NCA-130226-01
+  date        DateTime
+  fileKey     String? // MinIO object key
+  fileType    FileType?
+  fileName    String?
+  fileSize    Int?
+  createdById String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([category])
+  @@index([date])
+  @@map("advisories")
+}
+
+model DefacementStat {
+  id          String   @id @default(cuid())
+  year        Int
+  month       Int // 1-12
+  incidents   Int
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@unique([year, month])
+  @@index([year])
+  @@map("defacement_stats")
+}
+
+model IncidentReport {
+  id           String         @id @default(cuid())
+  trackingCode String?        @unique // human-friendly public lookup code (CERRT-XXXX-XXXX)
+  type         String
+  description  String
+  contactName  String
+  contactEmail String
+  contactPhone String
+  organization String
+  severity     Severity
+  status       IncidentStatus @default(new)
+  submittedAt  DateTime       @default(now())
+  reviewedById String?
+  reviewedAt   DateTime?
+  notes        String?
+
+  reviewedBy User? @relation(fields: [reviewedById], references: [id])
+
+  @@index([status])
+  @@index([submittedAt])
+  @@map("incident_reports")
+}
+
+model Subscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  subscribedAt DateTime @default(now())
+
+  @@index([subscribedAt])
+  @@map("subscribers")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique // SHA-256 of the raw token
+  expiresAt DateTime
+  usedAt    DateTime? // null until consumed
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model ContactSubmission {
+  id           String        @id @default(cuid())
+  inquiryType  InquiryType
+  name         String
+  email        String
+  phone        String?
+  organization String?
+  subject      String
+  message      String
+  submittedAt  DateTime      @default(now())
+  status       ContactStatus @default(new)
+
+  @@index([status])
+  @@index([submittedAt])
+  @@map("contact_submissions")
+}

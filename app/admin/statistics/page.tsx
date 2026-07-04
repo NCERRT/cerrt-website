@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/lib/useAuth";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +22,11 @@ import {
 } from "@/components/ui/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, Delete01Icon } from "@hugeicons/core-free-icons";
-import type { Id } from "@/convex/_generated/dataModel";
+import {
+  getDefacementStatsAction,
+  upsertStatAction,
+  deleteStatAction,
+} from "@/app/actions/defacementStats";
 
 const MONTHS = [
   "January",
@@ -40,38 +43,41 @@ const MONTHS = [
   "December",
 ];
 
+type StatsByYear = Record<
+  number,
+  { id: string; month: number; incidents: number }[]
+>;
+
 export default function StatisticsPage() {
-  const { user, sessionId } = useAuth();
-  const statsData = useQuery(api.defacementStats.list, {});
-  const years = useQuery(api.defacementStats.getYears, {});
+  const [statsByYear, setStatsByYear] = useState<StatsByYear>({});
+  const [years, setYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear(),
   );
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  // Get stats for selected year
-  const yearStats =
-    typeof statsData === "object" && !Array.isArray(statsData)
-      ? ((statsData as Record<number, Array<{
-          _id: Id<"defacementStats">;
-          _creationTime: number;
-          month: number;
-          incidents: number;
-          year: number;
-          createdBy: Id<"users">;
-          createdAt: number;
-          updatedAt: number;
-        }>>)[selectedYear] || [])
-      : [];
+  const loadData = useCallback(() => {
+    getDefacementStatsAction()
+      .then(({ statsByYear, years }) => {
+        setStatsByYear(statsByYear);
+        setYears(years);
+      })
+      .catch(() => {});
+  }, []);
 
-  // Create a complete 12-month array
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Build a complete 12-month dataset for the selected year
+  const yearStats = statsByYear[selectedYear] || [];
   const monthsData = MONTHS.map((month, index) => {
     const stat = yearStats.find((s) => s.month === index + 1);
     return {
       month: index + 1,
       monthName: month,
       incidents: stat?.incidents || 0,
-      id: stat?._id,
+      id: stat?.id,
     };
   });
 
@@ -97,12 +103,12 @@ export default function StatisticsPage() {
             <DialogHeader>
               <DialogTitle>Add/Update Monthly Data</DialogTitle>
             </DialogHeader>
-            {user && sessionId && (
-              <StatForm
-                onSuccess={() => setIsAddOpen(false)}
-                sessionId={sessionId}
-              />
-            )}
+            <StatForm
+              onSuccess={() => {
+                setIsAddOpen(false);
+                loadData();
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -120,13 +126,13 @@ export default function StatisticsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {years?.map((year) => (
+            {years.map((year) => (
               <SelectItem key={year} value={year.toString()}>
                 {year}
               </SelectItem>
             ))}
             {/* Always show current year even if no data */}
-            {!years?.includes(new Date().getFullYear()) && (
+            {!years.includes(new Date().getFullYear()) && (
               <SelectItem value={new Date().getFullYear().toString()}>
                 {new Date().getFullYear()}
               </SelectItem>
@@ -144,7 +150,9 @@ export default function StatisticsPage() {
           >
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-bold text-gray-900">{data.monthName}</h3>
-              {data.id && <DeleteStatButton statId={data.id} />}
+              {data.id && (
+                <DeleteStatButton statId={data.id} onDeleted={loadData} />
+              )}
             </div>
             <div className="text-4xl font-bold text-primary mb-2">
               {data.incidents}
@@ -186,35 +194,22 @@ export default function StatisticsPage() {
   );
 }
 
-function StatForm({
-  onSuccess,
-  sessionId,
-}: {
-  onSuccess: () => void;
-  sessionId: Id<"sessions">;
-}) {
+function StatForm({ onSuccess }: { onSuccess: () => void }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [incidents, setIncidents] = useState(0);
   const [saving, setSaving] = useState(false);
-
-  const upsertStat = useMutation(api.defacementStats.upsert);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      await upsertStat({
-        year,
-        month,
-        incidents,
-        sessionId,
-      });
+      await upsertStatAction(year, month, incidents);
+      toast.success("Statistic saved successfully");
       onSuccess();
     } catch (error) {
-      console.error("Error saving statistic:", error);
-      alert("Failed to save statistic");
+      toast.error((error as Error).message || "Failed to save statistic");
     } finally {
       setSaving(false);
     }
@@ -237,7 +232,10 @@ function StatForm({
 
       <div>
         <Label htmlFor="month">Month</Label>
-        <Select value={month.toString()} onValueChange={(v) => setMonth(parseInt(v))}>
+        <Select
+          value={month.toString()}
+          onValueChange={(v) => setMonth(parseInt(v))}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -275,24 +273,32 @@ function StatForm({
   );
 }
 
-function DeleteStatButton({ statId }: { statId: Id<"defacementStats"> }) {
-  const { sessionId } = useAuth();
-  const deleteStat = useMutation(api.defacementStats.remove);
+function DeleteStatButton({
+  statId,
+  onDeleted,
+}: {
+  statId: string;
+  onDeleted: () => void;
+}) {
   const [deleting, setDeleting] = useState(false);
+  const confirm = useConfirm();
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this data?")) return;
-    if (!sessionId) {
-      alert("Session expired. Please log in again.");
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete statistic?",
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
 
     setDeleting(true);
     try {
-      await deleteStat({ id: statId, sessionId });
+      await deleteStatAction(statId);
+      toast.success("Statistic deleted");
+      onDeleted();
     } catch (error) {
-      console.error("Error deleting stat:", error);
-      alert("Failed to delete stat");
+      toast.error((error as Error).message || "Failed to delete stat");
     } finally {
       setDeleting(false);
     }

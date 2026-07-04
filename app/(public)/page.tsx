@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -14,9 +14,33 @@ import {
 import Carousel from "@/components/ui/Carousel";
 import ReportIncidentModal from "@/components/ui/ReportIncidentModal";
 import DefacementStatistics from "@/components/sections/DefacementStatistics";
+import { getDefacementStatsAction } from "@/app/actions/defacementStats";
+import {
+  getAdvisoriesAction,
+  type AdvisoryWithFileUrl,
+} from "@/app/actions/advisories";
 
 export default function Home() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [defacementStats, setDefacementStats] = useState<{
+    statsByYear: Record<number, { month: number; incidents: number }[]>;
+    years: number[];
+  }>({ statsByYear: {}, years: [] });
+  const [recentAdvisories, setRecentAdvisories] = useState<
+    AdvisoryWithFileUrl[]
+  >([]);
+
+  useEffect(() => {
+    getDefacementStatsAction()
+      .then(setDefacementStats)
+      .catch(() => {
+        /* chart falls back to an empty current-year view */
+      });
+    // Fetch the 3 most recent advisories
+    getAdvisoriesAction()
+      .then((list) => setRecentAdvisories(list.slice(0, 3)))
+      .catch(() => {});
+  }, []);
   const services = [
     {
       title: "Incident Response",
@@ -45,8 +69,7 @@ export default function Home() {
     "/hero-images/NITDA25-CHD-AWARENESS-6.jpg",
   ];
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-NG", {
       year: "numeric",
       month: "long",
@@ -282,82 +305,90 @@ export default function Home() {
               guidelines.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                id: "ADV-2024-001",
-                title: "Critical Vulnerability in Popular Web Frameworks",
-                date: "2024-03-15",
-                severity: "critical",
-                category: "Web Security",
-                description:
-                  "A critical remote code execution vulnerability has been discovered in several popular web frameworks. Immediate patching is recommended.",
-              },
-            ].map((advisory) => (
-              <article
-                key={advisory.id}
-                className="bg-white border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex flex-col gap-4 mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                        {advisory.category}
-                      </span>
-                    </div>
-                    <h2 className="text-xl font-bold text-foreground mb-2">
-                      <Link
-                        href={`/advisories/${advisory.id.toLowerCase()}`}
-                        className="hover:text-primary cursor-pointer transition-colors"
-                      >
-                        {advisory.title}
-                      </Link>
-                    </h2>
-                    <p className="text-muted-foreground text-sm mb-3">
-                      {advisory.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <HugeiconsIcon
-                          icon={Calendar01Icon}
-                          size={16}
-                          color="currentColor"
-                        />
-                        {formatDate(advisory.date)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <HugeiconsIcon
-                          icon={IdentificationIcon}
-                          size={16}
-                          color="currentColor"
-                        />
-                        {advisory.id}
-                      </span>
+          {recentAdvisories.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Advisories will appear here once published.
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8">
+              {recentAdvisories.map((advisory) => (
+                <article
+                  key={advisory.id}
+                  className="bg-white border border-border rounded-lg p-6 hover:shadow-md transition-shadow flex flex-col"
+                >
+                  <div className="flex flex-col gap-4 mb-4 flex-1">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium capitalize">
+                          {advisory.category}
+                        </span>
+                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold uppercase">
+                          {advisory.severity}
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-bold text-foreground mb-2 line-clamp-2">
+                        <Link
+                          href="/advisories"
+                          className="hover:text-primary cursor-pointer transition-colors"
+                        >
+                          {advisory.title}
+                        </Link>
+                      </h2>
+                      <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                        {advisory.description}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <HugeiconsIcon
+                            icon={Calendar01Icon}
+                            size={16}
+                            color="currentColor"
+                          />
+                          {formatDate(advisory.date)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <HugeiconsIcon
+                            icon={IdentificationIcon}
+                            size={16}
+                            color="currentColor"
+                          />
+                          {advisory.advisoryId}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex md:flex-col gap-2">
+                  <div className="flex gap-2 mt-auto">
                     <Link
-                      href={`/advisories/${advisory.id.toLowerCase()}`}
-                      className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap"
+                      href="/advisories"
+                      className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap flex-1"
                     >
                       View Details
                     </Link>
-                    <button className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2 border border-border text-foreground text-sm font-semibold rounded-md hover:bg-muted transition-colors whitespace-nowrap">
-                      <HugeiconsIcon
-                        icon={Download01Icon}
-                        size={16}
-                        color="currentColor"
-                      />
-                      Download PDF
-                    </button>
+                    {advisory.fileUrl && advisory.fileType === "pdf" && (
+                      <a
+                        href={advisory.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2 border border-border text-foreground text-sm font-semibold rounded-md hover:bg-muted transition-colors whitespace-nowrap"
+                      >
+                        <HugeiconsIcon
+                          icon={Download01Icon}
+                          size={16}
+                          color="currentColor"
+                        />
+                        PDF
+                      </a>
+                    )}
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
           <div className="text-center mt-12">
             <Link
-              href="/advisory"
+              href="/advisories"
               className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
               View All Advisories
@@ -380,7 +411,10 @@ export default function Home() {
       </section>
 
       {/* Defacement Statistics */}
-      <DefacementStatistics />
+      <DefacementStatistics
+        statsByYear={defacementStats.statsByYear}
+        years={defacementStats.years}
+      />
 
       {/* Report Incident Modal */}
       <ReportIncidentModal

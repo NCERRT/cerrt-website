@@ -1,8 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -16,11 +14,22 @@ import {
   Calendar01Icon,
   IdentificationIcon,
 } from "@hugeicons/core-free-icons";
+import {
+  getAdvisoriesAction,
+  type AdvisoryWithFileUrl,
+} from "@/app/actions/advisories";
+import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 
 export default function OrganizationsAdvisoryPage() {
-  const advisories = useQuery(api.advisories.list, {
-    category: "organizations",
-  });
+  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+    null,
+  );
+
+  useEffect(() => {
+    getAdvisoriesAction("organizations")
+      .then(setAdvisories)
+      .catch(() => setAdvisories([]));
+  }, []);
 
   const bestPractices = [
     {
@@ -64,8 +73,7 @@ export default function OrganizationsAdvisoryPage() {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-NG", {
       year: "numeric",
       month: "long",
@@ -143,6 +151,29 @@ export default function OrganizationsAdvisoryPage() {
         </div>
       </section>
 
+      {/* Visual Advisories Gallery */}
+      {advisories && advisories.length > 0 && (() => {
+        const imageAdvisories = advisories.filter(
+          (a) => a.fileType === "image" && a.fileUrl,
+        );
+        if (imageAdvisories.length === 0) return null;
+        return (
+          <section className="py-16 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-10">
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3 font-serif">
+                  Visual Resources
+                </h2>
+                <p className="text-muted-foreground">
+                  Framework diagrams, infographics, and quick-reference posters
+                </p>
+              </div>
+              <AdvisoryImageGrid advisories={imageAdvisories} />
+            </div>
+          </section>
+        );
+      })()}
+
       {/* Advisories Grid */}
       <section className="py-16 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -165,19 +196,25 @@ export default function OrganizationsAdvisoryPage() {
                 No advisories available yet. Check back soon!
               </p>
             </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {advisories.map((advisory, index) => (
-                <AdvisoryCard
-                  key={advisory._id}
-                  advisory={advisory}
-                  index={index}
-                  getSeverityColor={getSeverityColor}
-                  formatDate={formatDate}
-                />
-              ))}
-            </div>
-          )}
+          ) : (() => {
+            const nonImageAdvisories = advisories.filter(
+              (a) => a.fileType !== "image",
+            );
+            if (nonImageAdvisories.length === 0) return null;
+            return (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {nonImageAdvisories.map((advisory, index) => (
+                  <AdvisoryCard
+                    key={advisory.id}
+                    advisory={advisory}
+                    index={index}
+                    getSeverityColor={getSeverityColor}
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -225,25 +262,12 @@ function AdvisoryCard({
   getSeverityColor,
   formatDate,
 }: {
-  advisory: {
-    _id: string;
-    title: string;
-    description: string;
-    severity: string;
-    advisoryId: string;
-    date: number;
-    fileStorageId?: string;
-    fileType?: string;
-  };
+  advisory: AdvisoryWithFileUrl;
   index: number;
   getSeverityColor: (severity: string) => string;
-  formatDate: (timestamp: number) => string;
+  formatDate: (date: Date) => string;
 }) {
-  // Always call the hook, but pass "skip" if no fileStorageId
-  const fileUrl = useQuery(
-    api.advisories.getFileUrl,
-    advisory.fileStorageId ? { storageId: advisory.fileStorageId as Id<"_storage"> } : "skip"
-  );
+  const fileUrl = advisory.fileUrl;
 
   return (
     <article
@@ -311,6 +335,7 @@ function AdvisoryCard({
                   src={fileUrl}
                   alt={advisory.title}
                   fill
+                  unoptimized
                   className="object-cover"
                 />
               </div>

@@ -1,17 +1,17 @@
 "use client";
 
-import { ConvexReactClient, ConvexProvider } from "convex/react";
 import { ReactNode } from "react";
 import { AuthProvider } from "@/lib/useAuth";
-
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
+import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ConvexProvider client={convex}>
-      <AuthProvider>
+    <AuthProvider>
+      <ConfirmProvider>
         {children}
-      </AuthProvider>
-    </ConvexProvider>
+        <Toaster />
+      </ConfirmProvider>
+    </AuthProvider>
   );
 }

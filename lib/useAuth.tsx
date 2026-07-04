@@ -1,72 +1,68 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import {
+  signInAction,
+  signOutAction,
+  getCurrentUserAction,
+  changePasswordAction,
+} from "@/app/actions/auth";
+
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  mustChangePassword: boolean;
+  role: string;
+}
 
 interface AuthContextType {
-  user: { _id: Id<"users">; email: string; name: string } | null;
-  sessionId: Id<"sessions"> | null;
+  user: AuthUser | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  changePassword: (current: string, newPw: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [sessionId, setSessionId] = useState<Id<"sessions"> | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const signInAction = useAction(api.auth.signIn);
-  const signOutMutation = useMutation(api.auth.signOut);
-
-  const user = useQuery(
-    api.users.viewer,
-    sessionId ? { sessionId } : "skip"
-  );
-
-  // Load session from HTTP-only cookie on mount
+  // Resolve the current user from the session cookie on mount
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.sessionId) {
-          setSessionId(data.sessionId as Id<"sessions">);
-        }
-        setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
+    getCurrentUserAction()
+      .then((u) => setUser(u))
+      .catch(() => setUser(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const result = await signInAction({ email, password });
-
-    // Store session in HTTP-only cookie
-    await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: result.sessionId }),
-    });
-
-    // Set session ID
-    setSessionId(result.sessionId);
+    const u = await signInAction(email, password);
+    setUser(u);
   };
 
   const signOut = async () => {
-    if (sessionId) {
-      await signOutMutation({ sessionId });
-    }
+    await signOutAction();
+    setUser(null);
+  };
 
-    // Clear HTTP-only cookie
-    await fetch("/api/auth/session", { method: "DELETE" });
-
-    setSessionId(null);
+  const changePassword = async (current: string, newPw: string) => {
+    const u = await changePasswordAction(current, newPw);
+    setUser(u);
   };
 
   return (
-    <AuthContext.Provider value={{ user: user ?? null, sessionId, isLoading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, signIn, signOut, changePassword }}
+    >
       {children}
     </AuthContext.Provider>
   );
