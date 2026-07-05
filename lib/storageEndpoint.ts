@@ -30,14 +30,23 @@ export function resolveStorageConfig(): StorageConfig {
         origin,
         endpoint: s3Endpoint,
       };
-    } catch (e) {
-      // Fall back if the URL is invalid
+    } catch {
+      // Log loudly - a runtime throw would surface as a Next.js server digest error
+      //  to end users). This shows up in Vercel logs so misconfig is diagnosable.
+      console.error(
+        `[storageEndpoint] S3_ENDPOINT is set but is not a valid URL: ${JSON.stringify(
+          s3Endpoint,
+        )}. Falling back to MINIO_* env vars — storage operations will likely fail until this is fixed.`,
+      );
     }
   }
 
   const hostname = process.env.MINIO_ENDPOINT ?? "localhost";
   const rawPort = process.env.MINIO_PORT ?? "9000";
-  const protocol = process.env.MINIO_USE_SSL === "true" ? "https" : "http";
+  const protocol =
+    (process.env.MINIO_USE_SSL ?? "").toLowerCase() === "true"
+      ? "https"
+      : "http";
   const port = rawPort === "80" || rawPort === "443" ? "" : rawPort;
   const origin = `${protocol}://${hostname}${port ? `:${port}` : ""}`;
   const endpoint = `${protocol}://${hostname}:${rawPort}`;
