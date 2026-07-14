@@ -14,6 +14,7 @@ import {
 } from "@/app/actions/advisories";
 import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import SubscribeForm from "@/components/ui/SubscribeForm";
+import AdvisoryCard from "@/components/advisory-card";
 
 export default function AdvisoriesPage() {
   const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
@@ -152,8 +153,6 @@ export default function AdvisoriesPage() {
                     key={advisory.id}
                     advisory={advisory}
                     index={index}
-                    getSeverityColor={getSeverityColor}
-                    formatDate={formatDate}
                   />
                 ))}
               </div>
@@ -179,130 +178,4 @@ export default function AdvisoriesPage() {
   );
 }
 
-function AdvisoryCard({
-  advisory,
-  index,
-  getSeverityColor,
-  formatDate,
-}: {
-  advisory: AdvisoryWithFileUrl;
-  index: number;
-  getSeverityColor: (severity: string) => string;
-  formatDate: (date: Date) => string;
-}) {
-  const fileUrl = advisory.fileUrl;
 
-  return (
-    <article
-      className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
-      style={{ animationDelay: `${index * 0.1}s` }}
-    >
-      {/* Accent bar based on severity */}
-      <div
-        className={`absolute top-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left ${
-          advisory.severity === "critical"
-            ? "bg-destructive"
-            : advisory.severity === "high"
-              ? "bg-warning"
-              : advisory.severity === "medium"
-                ? "bg-accent"
-                : "bg-muted-foreground"
-        }`}
-      ></div>
-
-      {/* Severity & Category Badges */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getSeverityColor(
-            advisory.severity,
-          )}`}
-        >
-          {advisory.severity}
-        </span>
-        <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-semibold">
-          {advisory.category}
-        </span>
-      </div>
-
-      {/* Advisory ID */}
-      <div className="flex items-center gap-2 mb-3">
-        <HugeiconsIcon
-          icon={IdentificationIcon}
-          size={16}
-          color="currentColor"
-          className="text-primary"
-        />
-        <span className="text-sm font-bold text-primary">
-          {advisory.advisoryId}
-        </span>
-      </div>
-
-      {/* Title */}
-      <h2 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors leading-tight">
-        {advisory.title}
-      </h2>
-
-      {/* Description */}
-      <p className="text-muted-foreground text-sm mb-4 leading-relaxed line-clamp-3">
-        {advisory.description}
-      </p>
-
-      {/* Date */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 pt-4 border-t border-border">
-        <HugeiconsIcon
-          icon={Calendar01Icon}
-          size={16}
-          color="currentColor"
-        />
-        <span className="font-medium">{formatDate(advisory.date)}</span>
-      </div>
-
-      {/* File Display - Image Preview or Download Button */}
-      {fileUrl && (
-        <div className="space-y-3">
-          {advisory.fileType === "image" ? (
-            <>
-              <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-border">
-                <Image
-                  src={fileUrl}
-                  alt={advisory.title}
-                  fill
-                  unoptimized
-                  className="object-cover"
-                />
-              </div>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all duration-300 gap-2"
-              >
-                <HugeiconsIcon
-                  icon={Download01Icon}
-                  size={16}
-                  color="currentColor"
-                />
-                View Full Image
-              </a>
-            </>
-          ) : (
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              download
-              className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all duration-300 gap-2"
-            >
-              <HugeiconsIcon
-                icon={Download01Icon}
-                size={16}
-                color="currentColor"
-              />
-              Download PDF
-            </a>
-          )}
-        </div>
-      )}
-    </article>
-  );
-}

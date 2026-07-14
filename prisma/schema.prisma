@@ -32,6 +32,11 @@ enum FileType {
   image
 }
 
+enum AdvisoryType {
+  standard
+  poster
+}
+
 enum IncidentStatus {
   new
   reviewing
@@ -93,26 +98,50 @@ model Session {
 }
 
 model Advisory {
-  id          String           @id @default(cuid())
-  title       String
-  description String
-  category    AdvisoryCategory
-  severity    Severity
-  advisoryId  String           @unique // business identifier, e.g. NCA-130226-01
-  date        DateTime
-  fileKey     String? // MinIO object key
-  fileType    FileType?
-  fileName    String?
-  fileSize    Int?
-  createdById String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id                 String           @id @default(cuid())
+  slug               String?          @unique
+  title              String
+  description        String           // Deprecated: migrating to overview
+  type               AdvisoryType     @default(standard)
+  overview           String?
+  impact             String?
+  affectedProducts   String[]
+  recommendedActions String[]
+  references         String[]
+  tags               String[]
+  category           AdvisoryCategory
+  severity           Severity
+  advisoryId         String           @unique // business identifier, e.g. NCA-130226-01
+  date               DateTime
+  fileKey            String? // MinIO object key
+  fileType           FileType?
+  fileName           String?
+  fileSize           Int?
+  createdById        String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  createdBy User @relation(fields: [createdById], references: [id])
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  posterItems PosterItem[]
 
   @@index([category])
   @@index([date])
   @@map("advisories")
+}
+
+model PosterItem {
+  id         String   @id @default(cuid())
+  advisoryId String
+  imageKey   String
+  fileName   String
+  fileSize   Int
+  order      Int
+  createdAt  DateTime @default(now())
+
+  advisory Advisory @relation(fields: [advisoryId], references: [id], onDelete: Cascade)
+
+  @@index([advisoryId])
+  @@map("poster_items")
 }
 
 model DefacementStat {

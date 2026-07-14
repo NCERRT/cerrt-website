@@ -35,16 +35,16 @@ import {
   createAdvisoryAction,
   updateAdvisoryAction,
   deleteAdvisoryAction,
-  type AdvisoryWithFileUrl,
+  type AdvisoryDetailWithUrls,
 } from "@/app/actions/advisories";
 
 export default function AdvisoriesPage() {
-  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+  const [advisories, setAdvisories] = useState<AdvisoryDetailWithUrls[] | null>(
     null,
   );
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAdvisory, setEditingAdvisory] =
-    useState<AdvisoryWithFileUrl | null>(null);
+    useState<AdvisoryDetailWithUrls | null>(null);
 
   const loadData = useCallback(() => {
     getAdvisoriesAction()
@@ -98,6 +98,9 @@ export default function AdvisoriesPage() {
                   Advisory ID
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                  Type
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
                   Title
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
@@ -119,6 +122,11 @@ export default function AdvisoriesPage() {
                 <tr key={advisory.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-primary">
                     {advisory.advisoryId}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant="outline" className="capitalize">
+                      {advisory.type}
+                    </Badge>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -210,22 +218,82 @@ export default function AdvisoriesPage() {
   );
 }
 
+function StringListInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string[];
+  onChange: (v: string[]) => void;
+}) {
+  const [inputValue, setInputValue] = useState("");
+  const handleAdd = () => {
+    if (inputValue.trim()) {
+      onChange([...value, inputValue.trim()]);
+      setInputValue("");
+    }
+  };
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="flex gap-2 mb-2 mt-1">
+        <Input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAdd();
+            }
+          }}
+          placeholder={`Add ${label.toLowerCase()}...`}
+        />
+        <Button type="button" onClick={handleAdd}>
+          Add
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {value.map((item, i) => (
+          <Badge key={i} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+            {item}
+            <button
+              type="button"
+              onClick={() => onChange(value.filter((_, idx) => idx !== i))}
+              className="text-gray-500 hover:text-red-500 ml-1"
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AdvisoryForm({
   advisory,
   onSuccess,
 }: {
-  advisory?: AdvisoryWithFileUrl;
+  advisory?: AdvisoryDetailWithUrls;
   onSuccess: () => void;
 }) {
   const [formData, setFormData] = useState<{
+    type: "standard" | "poster";
     title: string;
-    description: string;
+    overview: string;
     category: "general" | "individuals" | "organizations" | "kids";
     severity: "critical" | "high" | "medium" | "low";
     advisoryId: string;
+    tags: string[];
+    impact: string;
+    affectedProducts: string[];
+    recommendedActions: string[];
+    references: string[];
   }>({
+    type: (advisory?.type as "standard" | "poster") || "standard",
     title: advisory?.title || "",
-    description: advisory?.description || "",
+    overview: advisory?.overview || advisory?.description || "",
     category:
       (advisory?.category as
         | "general"
@@ -236,8 +304,25 @@ function AdvisoryForm({
       (advisory?.severity as "critical" | "high" | "medium" | "low") ||
       "medium",
     advisoryId: advisory?.advisoryId || "",
+    tags: advisory?.tags || [],
+    impact: advisory?.impact || "",
+    affectedProducts: advisory?.affectedProducts || [],
+    recommendedActions: advisory?.recommendedActions || [],
+    references: advisory?.references || [],
   });
+
   const [file, setFile] = useState<File | null>(null);
+  const [posterItems, setPosterItems] = useState<{
+    id: string;
+    file: File | null;
+    existingItem?: any;
+  }[]>(
+    advisory?.posterItems?.map((p) => ({
+      id: p.id || Math.random().toString(),
+      file: null,
+      existingItem: p,
+    })) || []
+  );
   const [uploading, setUploading] = useState(false);
   const [fileError, setFileError] = useState("");
 
@@ -246,7 +331,6 @@ function AdvisoryForm({
     setFileError("");
 
     if (selectedFile) {
-      // Comprehensive validation with magic-number verification
       const validation = await validateFile(selectedFile);
       if (!validation.valid) {
         setFileError(validation.error || "Invalid file");
@@ -255,8 +339,25 @@ function AdvisoryForm({
         return;
       }
     }
-
     setFile(selectedFile);
+  };
+
+  const handlePosterFileChange = async (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFile = e.target.files?.[0] || null;
+    if (selectedFile) {
+      const validation = await validateFile(selectedFile);
+      if (!validation.valid || validation.fileType !== "image") {
+        toast.error(validation.error || "Invalid image file");
+        e.target.value = "";
+        return;
+      }
+      const newItems = [...posterItems];
+      newItems[index].file = selectedFile;
+      setPosterItems(newItems);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -279,8 +380,7 @@ function AdvisoryForm({
           }
         | undefined;
 
-      // Upload the file (if any) via the validated upload route
-      if (file) {
+      if (formData.type === "standard" && file) {
         const validation = await validateFile(file);
         if (!validation.valid || !validation.fileType) {
           throw new Error(validation.error || "Invalid file type");
@@ -299,10 +399,50 @@ function AdvisoryForm({
         fileMeta = await res.json();
       }
 
+      let uploadedPosterItems: any[] = [];
+      if (formData.type === "poster") {
+        let order = 0;
+        for (const item of posterItems) {
+          if (item.file) {
+            const uploadData = new FormData();
+            uploadData.append("file", item.file);
+            const res = await fetch("/api/advisories/upload", {
+              method: "POST",
+              body: uploadData,
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error || "Image upload failed");
+            }
+            const meta = await res.json();
+            uploadedPosterItems.push({
+              imageKey: meta.fileKey,
+              fileName: meta.fileName,
+              fileSize: meta.fileSize,
+              order: order++,
+            });
+          } else if (item.existingItem) {
+            uploadedPosterItems.push({
+              imageKey: item.existingItem.imageKey,
+              fileName: item.existingItem.fileName,
+              fileSize: item.existingItem.fileSize,
+              order: order++,
+            });
+          }
+        }
+      }
+
+      const payload = {
+        ...formData,
+        description: formData.overview, // Ensure description is set
+        file: fileMeta,
+        posterItems: formData.type === "poster" ? uploadedPosterItems : [],
+      };
+
       if (advisory) {
-        await updateAdvisoryAction(advisory.id, { ...formData, file: fileMeta });
+        await updateAdvisoryAction(advisory.id, payload);
       } else {
-        await createAdvisoryAction({ ...formData, file: fileMeta });
+        await createAdvisoryAction(payload);
       }
 
       toast.success("Advisory saved successfully");
@@ -315,8 +455,25 @@ function AdvisoryForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
       <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="type">Advisory Type</Label>
+          <Select
+            value={formData.type}
+            onValueChange={(value: "standard" | "poster") =>
+              setFormData({ ...formData, type: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="poster">Poster</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div>
           <Label htmlFor="advisoryId">Advisory ID</Label>
           <Input
@@ -333,11 +490,10 @@ function AdvisoryForm({
             title="Format: NCA-DDMMYY-NN (e.g., NCA-130226-01)"
             required
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Format: NCA-DDMMYY-NN (e.g., NCA-130226-01 for 1st advisory on 13
-            Feb 2026)
-          </p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="category">Category</Label>
           <Select
@@ -364,6 +520,28 @@ function AdvisoryForm({
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label htmlFor="severity">Severity</Label>
+          <Select
+            value={formData.severity}
+            onValueChange={(value) =>
+              setFormData({
+                ...formData,
+                severity: value as "critical" | "high" | "medium" | "low",
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -375,71 +553,122 @@ function AdvisoryForm({
           maxLength={200}
           required
         />
-        <p className="text-xs text-gray-500 mt-1">
-          {formData.title.length}/200 characters
-        </p>
       </div>
 
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="overview">Overview</Label>
         <Textarea
-          id="description"
-          value={formData.description}
+          id="overview"
+          value={formData.overview}
           onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
+            setFormData({ ...formData, overview: e.target.value })
           }
-          rows={4}
+          rows={3}
           maxLength={5000}
           required
         />
-        <p className="text-xs text-gray-500 mt-1">
-          {formData.description.length}/5000 characters
-        </p>
       </div>
 
-      <div>
-        <Label htmlFor="severity">Severity</Label>
-        <Select
-          value={formData.severity}
-          onValueChange={(value) =>
-            setFormData({
-              ...formData,
-              severity: value as "critical" | "high" | "medium" | "low",
-            })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <StringListInput
+        label="Tags"
+        value={formData.tags}
+        onChange={(v) => setFormData({ ...formData, tags: v })}
+      />
 
-      <div>
-        <Label htmlFor="file">File (PDF or Image)</Label>
-        <Input
-          id="file"
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
-          onChange={handleFileChange}
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          PDF: max 10MB | Images (JPEG, PNG, WebP, GIF): max 5MB
-        </p>
-        {fileError && <p className="text-xs text-red-600 mt-1">{fileError}</p>}
-        {advisory?.fileName && !file && (
-          <p className="text-sm text-gray-600 mt-1">
-            Current file: {advisory.fileName}
-          </p>
-        )}
-      </div>
+      {formData.type === "standard" && (
+        <>
+          <div>
+            <Label htmlFor="impact">Impact</Label>
+            <Textarea
+              id="impact"
+              value={formData.impact}
+              onChange={(e) => setFormData({ ...formData, impact: e.target.value })}
+              rows={3}
+            />
+          </div>
 
-      <div className="flex justify-end gap-3">
+          <StringListInput
+            label="Affected Products"
+            value={formData.affectedProducts}
+            onChange={(v) => setFormData({ ...formData, affectedProducts: v })}
+          />
+
+          <StringListInput
+            label="Recommended Actions"
+            value={formData.recommendedActions}
+            onChange={(v) => setFormData({ ...formData, recommendedActions: v })}
+          />
+
+          <StringListInput
+            label="References"
+            value={formData.references}
+            onChange={(v) => setFormData({ ...formData, references: v })}
+          />
+
+          <div>
+            <Label htmlFor="file">File (PDF or Image)</Label>
+            <Input
+              id="file"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
+              onChange={handleFileChange}
+            />
+            {fileError && <p className="text-xs text-red-600 mt-1">{fileError}</p>}
+            {advisory?.fileName && !file && (
+              <p className="text-sm text-gray-600 mt-1">
+                Current file: {advisory.fileName}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {formData.type === "poster" && (
+        <div className="space-y-4">
+          <Label>Poster Images</Label>
+          {posterItems.map((item, index) => (
+            <div key={item.id} className="flex items-center gap-2">
+              <div className="flex-1">
+                <Input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif"
+                  onChange={(e) => handlePosterFileChange(index, e)}
+                />
+                {item.existingItem && !item.file && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Current: {item.existingItem.fileName}
+                  </p>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-red-600"
+                onClick={() =>
+                  setPosterItems(posterItems.filter((_, i) => i !== index))
+                }
+              >
+                <HugeiconsIcon icon={Delete01Icon} size={16} />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              setPosterItems([
+                ...posterItems,
+                { id: Math.random().toString(), file: null },
+              ])
+            }
+          >
+            <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
+            Add Image
+          </Button>
+        </div>
+      )}
+
+      <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onSuccess}>
           Cancel
         </Button>

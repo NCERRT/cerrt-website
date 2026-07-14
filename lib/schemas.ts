@@ -91,6 +91,8 @@ export const advisoryCategorySchema = z.enum([
   "general",
 ]);
 
+export const advisoryTypeSchema = z.enum(["standard", "poster"]);
+
 // ============================================================
 // Incident Report Schema
 // ============================================================
@@ -151,20 +153,40 @@ export const advisoryIdSchema = z
   );
 
 export const advisoryTitleSchema = requiredString(LIMITS.TITLE_MAX, "Title");
-export const advisoryDescriptionSchema = requiredString(
+export const advisoryOverviewSchema = requiredString(
   LIMITS.DESCRIPTION_MAX,
-  "Description",
+  "Overview",
 );
 
-export const advisorySchema = z.object({
+export const baseAdvisorySchema = z.object({
   title: advisoryTitleSchema,
-  description: advisoryDescriptionSchema,
+  overview: advisoryOverviewSchema,
   category: advisoryCategorySchema,
   severity: severitySchema,
   advisoryId: advisoryIdSchema,
+  tags: z.array(z.string()).optional().default([]),
 });
 
+export const standardAdvisorySchema = baseAdvisorySchema.extend({
+  type: z.literal("standard").default("standard"),
+  impact: safeString(3000).optional().or(z.literal("")),
+  affectedProducts: z.array(z.string()).max(50).optional().default([]),
+  recommendedActions: z.array(z.string()).max(50).optional().default([]),
+  references: z.array(z.string().url("Must be a valid URL")).max(50).optional().default([]),
+});
+
+export const posterAdvisorySchema = baseAdvisorySchema.extend({
+  type: z.literal("poster"),
+});
+
+export const advisorySchema = z.discriminatedUnion("type", [
+  standardAdvisorySchema,
+  posterAdvisorySchema,
+]);
+
 export type AdvisoryInput = z.infer<typeof advisorySchema>;
+export type StandardAdvisoryInput = z.infer<typeof standardAdvisorySchema>;
+export type PosterAdvisoryInput = z.infer<typeof posterAdvisorySchema>;
 
 // ============================================================
 // Auth Schemas

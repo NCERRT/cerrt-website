@@ -19,6 +19,7 @@ import {
   getAdvisoriesAction,
   type AdvisoryWithFileUrl,
 } from "@/app/actions/advisories";
+import AdvisoryCard from "@/components/advisory-card";
 
 export default function Home() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -285,76 +286,12 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-8">
-              {recentAdvisories.map((advisory) => (
-                <article
+              {recentAdvisories.map((advisory, index) => (
+                <AdvisoryCard
                   key={advisory.id}
-                  className="bg-white border border-border rounded-lg p-6 hover:shadow-md transition-shadow flex flex-col"
-                >
-                  <div className="flex flex-col gap-4 mb-4 flex-1">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium capitalize">
-                          {advisory.category}
-                        </span>
-                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold uppercase">
-                          {advisory.severity}
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-bold text-foreground mb-2 line-clamp-2">
-                        <Link
-                          href="/advisories"
-                          className="hover:text-primary cursor-pointer transition-colors"
-                        >
-                          {advisory.title}
-                        </Link>
-                      </h2>
-                      <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
-                        {advisory.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <HugeiconsIcon
-                            icon={Calendar01Icon}
-                            size={16}
-                            color="currentColor"
-                          />
-                          {formatDate(advisory.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <HugeiconsIcon
-                            icon={IdentificationIcon}
-                            size={16}
-                            color="currentColor"
-                          />
-                          {advisory.advisoryId}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-auto">
-                    <Link
-                      href="/advisories"
-                      className="inline-flex cursor-pointer items-center justify-center px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap flex-1"
-                    >
-                      View Details
-                    </Link>
-                    {advisory.fileUrl && advisory.fileType === "pdf" && (
-                      <a
-                        href={advisory.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex cursor-pointer items-center justify-center gap-2 px-4 py-2 border border-border text-foreground text-sm font-semibold rounded-md hover:bg-muted transition-colors whitespace-nowrap"
-                      >
-                        <HugeiconsIcon
-                          icon={Download01Icon}
-                          size={16}
-                          color="currentColor"
-                        />
-                        PDF
-                      </a>
-                    )}
-                  </div>
-                </article>
+                  advisory={advisory as any}
+                  index={index}
+                />
               ))}
             </div>
           )}

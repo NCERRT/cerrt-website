@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import type { AdvisoryCategory, FileType, Severity } from "@prisma/client";
+import type { AdvisoryCategory, Prisma } from "@prisma/client";
 
 /**
  * Data-access layer for advisories.
@@ -12,48 +12,36 @@ export function listAdvisories(category?: AdvisoryCategory) {
   return prisma.advisory.findMany({
     where: category ? { category } : undefined,
     orderBy: { date: "desc" },
+    include: { posterItems: { orderBy: { order: 'asc' } } },
   });
 }
 
 export function getAdvisoryById(id: string) {
-  return prisma.advisory.findUnique({ where: { id } });
+  return prisma.advisory.findUnique({
+    where: { id },
+    include: { posterItems: { orderBy: { order: 'asc' } } },
+  });
 }
 
 export function getAdvisoryByAdvisoryId(advisoryId: string) {
-  return prisma.advisory.findUnique({ where: { advisoryId } });
+  return prisma.advisory.findUnique({
+    where: { advisoryId },
+    include: { posterItems: { orderBy: { order: 'asc' } } },
+  });
 }
 
-export interface CreateAdvisoryData {
-  title: string;
-  description: string;
-  category: AdvisoryCategory;
-  severity: Severity;
-  advisoryId: string;
-  date: Date;
-  fileKey?: string;
-  fileType?: FileType;
-  fileName?: string;
-  fileSize?: number;
-  createdById: string;
+export function getAdvisoryBySlug(slug: string) {
+  return prisma.advisory.findUnique({
+    where: { slug },
+    include: { posterItems: { orderBy: { order: 'asc' } } },
+  });
 }
 
-export function createAdvisory(data: CreateAdvisoryData) {
+export function createAdvisory(data: Prisma.AdvisoryUncheckedCreateInput) {
   return prisma.advisory.create({ data });
 }
 
-export interface UpdateAdvisoryData {
-  title?: string;
-  description?: string;
-  category?: AdvisoryCategory;
-  severity?: Severity;
-  advisoryId?: string;
-  fileKey?: string;
-  fileType?: FileType;
-  fileName?: string;
-  fileSize?: number;
-}
-
-export function updateAdvisory(id: string, data: UpdateAdvisoryData) {
+export function updateAdvisory(id: string, data: Prisma.AdvisoryUncheckedUpdateInput) {
   return prisma.advisory.update({ where: { id }, data });
 }
 
