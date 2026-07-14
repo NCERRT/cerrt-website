@@ -15,13 +15,13 @@ import {
 import Carousel from "@/components/ui/Carousel";
 import {
   getAdvisoriesAction,
-  type AdvisoryWithFileUrl,
+  type AdvisoryDetailWithUrls,
 } from "@/app/actions/advisories";
 import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import AdvisoryCard from "@/components/advisory-card";
 
 export default function KidsAdvisoryPage() {
-  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+  const [advisories, setAdvisories] = useState<AdvisoryDetailWithUrls[] | null>(
     null,
   );
 

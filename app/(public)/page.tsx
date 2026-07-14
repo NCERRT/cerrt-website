@@ -17,7 +17,7 @@ import DefacementStatistics from "@/components/sections/DefacementStatistics";
 import { getDefacementStatsAction } from "@/app/actions/defacementStats";
 import {
   getAdvisoriesAction,
-  type AdvisoryWithFileUrl,
+  type AdvisoryDetailWithUrls,
 } from "@/app/actions/advisories";
 import AdvisoryCard from "@/components/advisory-card";
 
@@ -28,7 +28,7 @@ export default function Home() {
     years: number[];
   }>({ statsByYear: {}, years: [] });
   const [recentAdvisories, setRecentAdvisories] = useState<
-    AdvisoryWithFileUrl[]
+    AdvisoryDetailWithUrls[]
   >([]);
 
   useEffect(() => {

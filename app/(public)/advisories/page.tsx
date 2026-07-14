@@ -10,14 +10,14 @@ import {
 } from "@hugeicons/core-free-icons";
 import {
   getAdvisoriesAction,
-  type AdvisoryWithFileUrl,
+  type AdvisoryDetailWithUrls,
 } from "@/app/actions/advisories";
 import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import SubscribeForm from "@/components/ui/SubscribeForm";
 import AdvisoryCard from "@/components/advisory-card";
 
 export default function AdvisoriesPage() {
-  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+  const [advisories, setAdvisories] = useState<AdvisoryDetailWithUrls[] | null>(
     null,
   );
 

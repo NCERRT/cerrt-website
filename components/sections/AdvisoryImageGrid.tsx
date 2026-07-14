@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { AdvisoryWithFileUrl } from "@/app/actions/advisories";
+import type { AdvisoryDetailWithUrls } from "@/app/actions/advisories";
 
 /**
  * Grid of image-type advisories (posters, infographics).
@@ -10,7 +10,7 @@ import type { AdvisoryWithFileUrl } from "@/app/actions/advisories";
 export default function AdvisoryImageGrid({
   advisories,
 }: {
-  advisories: AdvisoryWithFileUrl[];
+  advisories: AdvisoryDetailWithUrls[];
 }) {
   if (advisories.length === 0) return null;
 
@@ -23,7 +23,7 @@ export default function AdvisoryImageGrid({
   );
 }
 
-function ImageCard({ advisory }: { advisory: AdvisoryWithFileUrl }) {
+function ImageCard({ advisory }: { advisory: AdvisoryDetailWithUrls }) {
   if (!advisory.fileUrl) return null;
   return (
     <div className="group relative aspect-square rounded-xl overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover-lift">

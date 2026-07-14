@@ -16,12 +16,13 @@ import {
 } from "@hugeicons/core-free-icons";
 import {
   getAdvisoriesAction,
-  type AdvisoryWithFileUrl,
+  type AdvisoryDetailWithUrls,
+} from "@/app/actions/advisories";
 import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import AdvisoryCard from "@/components/advisory-card";
 
 export default function OrganizationsAdvisoryPage() {
-  const [advisories, setAdvisories] = useState<AdvisoryWithFileUrl[] | null>(
+  const [advisories, setAdvisories] = useState<AdvisoryDetailWithUrls[] | null>(
     null,
   );
 
