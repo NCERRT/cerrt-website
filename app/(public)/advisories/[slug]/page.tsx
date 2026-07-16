@@ -48,7 +48,7 @@ export default async function AdvisoryDetailPage({
             <span className="px-4 py-1.5 bg-white text-muted-foreground rounded-full text-sm font-semibold border border-border capitalize">
               {advisory.category}
             </span>
-            <span className="ml-auto flex items-center gap-2 text-sm font-semibold text-primary">
+            <span className="sm:ml-auto flex items-center gap-2 text-sm font-semibold text-primary">
               <HugeiconsIcon icon={IdentificationIcon} size={18} />
               {advisory.advisoryId}
             </span>
@@ -58,7 +58,7 @@ export default async function AdvisoryDetailPage({
             {advisory.title}
           </h1>
 
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex max-sm:flex-col sm:items-center gap-6 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
               <HugeiconsIcon icon={Calendar01Icon} size={18} />
               Published: {formatDate(advisory.date)}

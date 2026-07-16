@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
@@ -11,8 +10,6 @@ import {
   UserGroupIcon,
   SecurityLockIcon,
   Download01Icon,
-  Calendar01Icon,
-  IdentificationIcon,
 } from "@hugeicons/core-free-icons";
 import {
   getAdvisoriesAction,
@@ -20,6 +17,8 @@ import {
 } from "@/app/actions/advisories";
 import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import AdvisoryCard from "@/components/advisory-card";
+import CategoryHero from "@/components/sections/category-hero";
+import SafetyTipsGrid from "@/components/sections/safety-tips-grid";
 
 export default function OrganizationsAdvisoryPage() {
   const [advisories, setAdvisories] = useState<AdvisoryDetailWithUrls[] | null>(
@@ -59,52 +58,13 @@ export default function OrganizationsAdvisoryPage() {
     },
   ];
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return "bg-destructive text-white";
-      case "high":
-        return "bg-warning text-white";
-      case "medium":
-        return "bg-accent text-white";
-      case "low":
-        return "bg-muted text-muted-foreground";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-NG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date);
-  };
-
   return (
     <main className="flex flex-col">
-      {/* Hero Section */}
-      <section className="bg-secondary py-20 pattern-dots relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center max-w-3xl mx-auto animate-slide-in-up">
-            <div className="inline-block mb-6">
-              <span className="text-primary font-semibold text-sm uppercase tracking-wider bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-                For Organizations
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 font-serif leading-tight">
-              Enterprise Security{" "}
-              <span className="text-primary">Advisories</span>
-            </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              Protect your organization with comprehensive cybersecurity
-              advisories, frameworks, and industry best practices.
-            </p>
-          </div>
-        </div>
-      </section>
+      <CategoryHero
+        badge="For Organizations"
+        title={<>Enterprise Security <span className="text-primary">Advisories</span></>}
+        description="Protect your organization with comprehensive cybersecurity advisories, frameworks, and industry best practices."
+      />
 
       {/* Best Practices */}
       <section className="py-20 bg-white">
@@ -122,33 +82,7 @@ export default function OrganizationsAdvisoryPage() {
               Foundational practices for organizational cybersecurity
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {bestPractices.map((practice, index) => (
-              <div
-                key={index}
-                className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                <div className="mb-6 flex justify-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-                    <HugeiconsIcon
-                      icon={practice.icon}
-                      size={32}
-                      color="currentColor"
-                      className="text-primary group-hover:text-white transition-colors"
-                    />
-                  </div>
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-3 text-center group-hover:text-primary transition-colors">
-                  {practice.title}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed text-center">
-                  {practice.description}
-                </p>
-              </div>
-            ))}
-          </div>
+          <SafetyTipsGrid tips={bestPractices} />
         </div>
       </section>
 
@@ -254,5 +188,3 @@ export default function OrganizationsAdvisoryPage() {
     </main>
   );
 }
-
-

@@ -1,16 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UserShield02Icon,
   Home01Icon,
   UserMultiple02Icon,
   FavouriteIcon,
   Mouse13Icon,
-  Download01Icon,
-  Calendar01Icon,
-  IdentificationIcon,
 } from "@hugeicons/core-free-icons";
 import Carousel from "@/components/ui/Carousel";
 import {
@@ -19,6 +15,8 @@ import {
 } from "@/app/actions/advisories";
 import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import AdvisoryCard from "@/components/advisory-card";
+import CategoryHero from "@/components/sections/category-hero";
+import SafetyTipsGrid from "@/components/sections/safety-tips-grid";
 
 export default function KidsAdvisoryPage() {
   const [advisories, setAdvisories] = useState<AdvisoryDetailWithUrls[] | null>(
@@ -57,29 +55,6 @@ export default function KidsAdvisoryPage() {
     },
   ];
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return "bg-destructive text-white";
-      case "high":
-        return "bg-warning text-white";
-      case "medium":
-        return "bg-accent text-white";
-      case "low":
-        return "bg-muted text-muted-foreground";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-NG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date);
-  };
-
   // Gallery images — static hero images
   const galleryImages = [
     "/hero-images/NITDA25-CHD-AWARENESS-1.jpg",
@@ -95,31 +70,11 @@ export default function KidsAdvisoryPage() {
 
   return (
     <main className="flex flex-col">
-      {/* Hero Section */}
-      <section className="bg-secondary py-20 pattern-dots relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center max-w-3xl mx-auto animate-slide-in-up">
-            <div className="inline-flex items-center justify-center mb-6">
-              <div className="w-28 h-28 bg-primary/10 rounded-full flex items-center justify-center animate-float border-4 border-primary/20">
-                <HugeiconsIcon
-                  icon={UserShield02Icon}
-                  size={80}
-                  color="currentColor"
-                  className="text-primary"
-                />
-              </div>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 font-serif leading-tight">
-              Kids Safety Corner
-            </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              Stay informed about the latest cybersecurity threats,
-              vulnerabilities, and security updates affecting kids in Nigerian
-              and globally.
-            </p>
-          </div>
-        </div>
-      </section>
+      <CategoryHero
+        icon={UserShield02Icon}
+        title="Kids Safety Corner"
+        description="Stay informed about the latest cybersecurity threats, vulnerabilities, and security updates affecting kids in Nigeria and globally."
+      />
 
       {/* Safety Tips */}
       <section className="py-20 bg-white">
@@ -137,38 +92,7 @@ export default function KidsAdvisoryPage() {
               Remember these important rules to stay safe online!
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {safetyTips.map((tip, index) => (
-              <div
-                key={index}
-                className="group bg-white border-2 border-primary/20 rounded-2xl p-8 text-center hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {/* Top accent line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
-                <div className="mb-6 flex justify-center">
-                  <div
-                    className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300 animate-float"
-                    style={{ animationDelay: `${index * 0.5}s` }}
-                  >
-                    <HugeiconsIcon
-                      icon={tip.icon}
-                      size={48}
-                      color="currentColor"
-                      className="text-primary group-hover:text-white transition-colors"
-                    />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-                  {tip.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {tip.description}
-                </p>
-              </div>
-            ))}
-          </div>
+          <SafetyTipsGrid tips={safetyTips} variant="kids" />
         </div>
       </section>
 
@@ -257,5 +181,3 @@ export default function KidsAdvisoryPage() {
     </main>
   );
 }
-
-

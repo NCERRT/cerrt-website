@@ -26,9 +26,9 @@ export default function ReportIncidentModal({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">(
-    "idle"
-  );
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [validationError, setValidationError] = useState<string>("");
   const [trackingCode, setTrackingCode] = useState<string>("");
   const [copied, setCopied] = useState(false);
@@ -36,7 +36,7 @@ export default function ReportIncidentModal({
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -116,8 +116,9 @@ export default function ReportIncidentModal({
         onClick={handleClose}
         aria-label="Close modal"
       />
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 max-h-[calc(100vh-4rem)] overflow-y-auto border border-border animate-slide-in-up"
-        style={{ animationDuration: '0.3s' }}
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 max-h-[calc(100vh-4rem)] overflow-y-auto border border-border animate-slide-in-up"
+        style={{ animationDuration: "0.3s" }}
       >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b-2 border-border px-8 py-6 flex items-center justify-between z-10">
@@ -136,7 +137,7 @@ export default function ReportIncidentModal({
               </h2>
               <p className="text-sm text-muted-foreground font-medium flex items-center gap-2 mt-1">
                 <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                Emergency Hotline: +234 (0) 817 4432
+                Emergency Hotline: +234 (0) 817 877 4580
               </p>
             </div>
           </div>
@@ -162,179 +163,194 @@ export default function ReportIncidentModal({
               <span className="text-2xl">⚠️</span>
             </div>
             <div>
-              <h4 className="font-bold text-warning mb-1">Critical Incidents</h4>
+              <h4 className="font-bold text-warning mb-1">
+                Critical Incidents
+              </h4>
               <p className="text-sm text-foreground/80 font-medium leading-relaxed">
-                For active/ongoing incidents requiring immediate response, please call
-                our emergency hotline immediately at <strong className="text-warning">+234 (0) 817 4432</strong>.
+                For active/ongoing incidents requiring immediate response,
+                please call our emergency hotline immediately at{" "}
+                <strong className="text-warning">+234 (0) 817 877 4580</strong>.
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {submitStatus !== "success" && (<>
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Contact Information</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    maxLength={100}
-                    className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                    placeholder="John Doe"
-                  />
+            {submitStatus !== "success" && (
+              <>
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground">
+                    Contact Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        maxLength={100}
+                        className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                        placeholder="John Doe"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        maxLength={254}
+                        className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        maxLength={30}
+                        className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                        placeholder="+234 XXX XXX XXXX"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="organization"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Organization *
+                      </label>
+                      <input
+                        type="text"
+                        id="organization"
+                        name="organization"
+                        value={formData.organization}
+                        onChange={handleChange}
+                        required
+                        maxLength={200}
+                        className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                        placeholder="Your organization"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    maxLength={254}
-                    className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                    placeholder="john@example.com"
-                  />
-                </div>
+                {/* Incident Details */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground">
+                    Incident Details
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="incidentType"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Incident Type *
+                      </label>
+                      <select
+                        id="incidentType"
+                        name="incidentType"
+                        value={formData.incidentType}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                      >
+                        <option value="security-breach">Security Breach</option>
+                        <option value="malware">Malware Attack</option>
+                        <option value="phishing">
+                          Phishing/Social Engineering
+                        </option>
+                        <option value="ransomware">Ransomware</option>
+                        <option value="data-leak">Data Leak</option>
+                        <option value="ddos">DDoS Attack</option>
+                        <option value="unauthorized-access">
+                          Unauthorized Access
+                        </option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
 
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    maxLength={30}
-                    className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                    placeholder="+234 XXX XXX XXXX"
-                  />
-                </div>
+                    <div>
+                      <label
+                        htmlFor="severity"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Severity Level *
+                      </label>
+                      <select
+                        id="severity"
+                        name="severity"
+                        value={formData.severity}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                      >
+                        <option value="critical">
+                          Critical - Active & Severe
+                        </option>
+                        <option value="high">High - Significant Impact</option>
+                        <option value="medium">Medium - Moderate Impact</option>
+                        <option value="low">Low - Minor Impact</option>
+                      </select>
+                    </div>
+                  </div>
 
-                <div>
-                  <label
-                    htmlFor="organization"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Organization *
-                  </label>
-                  <input
-                    type="text"
-                    id="organization"
-                    name="organization"
-                    value={formData.organization}
-                    onChange={handleChange}
-                    required
-                    maxLength={200}
-                    className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                    placeholder="Your organization"
-                  />
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
+                      Incident Description *
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      required
+                      rows={6}
+                      maxLength={5000}
+                      className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                      placeholder="Please provide detailed information about the incident including:&#10;- What happened?&#10;- When did it occur?&#10;- What systems/data are affected?&#10;- Current status of the incident&#10;- Any immediate actions already taken"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formData.description.length}/5000 characters
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Incident Details */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Incident Details</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="incidentType"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Incident Type *
-                  </label>
-                  <select
-                    id="incidentType"
-                    name="incidentType"
-                    value={formData.incidentType}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                  >
-                    <option value="security-breach">Security Breach</option>
-                    <option value="malware">Malware Attack</option>
-                    <option value="phishing">Phishing/Social Engineering</option>
-                    <option value="ransomware">Ransomware</option>
-                    <option value="data-leak">Data Leak</option>
-                    <option value="ddos">DDoS Attack</option>
-                    <option value="unauthorized-access">Unauthorized Access</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="severity"
-                    className="block text-sm font-medium text-foreground mb-2"
-                  >
-                    Severity Level *
-                  </label>
-                  <select
-                    id="severity"
-                    name="severity"
-                    value={formData.severity}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                  >
-                    <option value="critical">Critical - Active & Severe</option>
-                    <option value="high">High - Significant Impact</option>
-                    <option value="medium">Medium - Moderate Impact</option>
-                    <option value="low">Low - Minor Impact</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Incident Description *
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  rows={6}
-                  maxLength={5000}
-                  className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
-                  placeholder="Please provide detailed information about the incident including:&#10;- What happened?&#10;- When did it occur?&#10;- What systems/data are affected?&#10;- Current status of the incident&#10;- Any immediate actions already taken"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formData.description.length}/5000 characters
-                </p>
-              </div>
-            </div>
-            </>)}
+              </>
+            )}
 
             {/* Submit Status */}
             {validationError && (
@@ -415,8 +431,18 @@ export default function ReportIncidentModal({
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {isSubmitting ? "Submitting..." : "Submit Report"}
                     {!isSubmitting && (
-                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      <svg
+                        className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
                       </svg>
                     )}
                   </span>

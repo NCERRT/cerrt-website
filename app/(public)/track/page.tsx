@@ -26,19 +26,18 @@ const STATUS_COPY: Record<
   },
   reviewing: {
     label: "Under review",
-    description:
-      "Our team is actively analysing the details of your report.",
+    description: "Our team is actively analysing the details of your report.",
     tone: "active",
   },
   resolved: {
     label: "Resolved",
-    description:
-      "Review has concluded and any required action has been taken.",
+    description: "Review has concluded and any required action has been taken.",
     tone: "done",
   },
   closed: {
     label: "Closed",
-    description: "This report has been closed. No further action will be taken.",
+    description:
+      "This report has been closed. No further action will be taken.",
     tone: "done",
   },
 };
@@ -123,9 +122,7 @@ export default function TrackIncidentPage() {
                 name="trackingCode"
                 type="text"
                 value={trackingCode}
-                onChange={(e) =>
-                  setTrackingCode(e.target.value.toUpperCase())
-                }
+                onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
                 required
                 placeholder="CERRT-XXXX-XXXX"
                 pattern="^CERRT-[A-Z2-9]{4}-[A-Z2-9]{4}$"
@@ -233,7 +230,7 @@ export default function TrackIncidentPage() {
 
               <p className="text-xs text-muted-foreground mt-6 pt-6 border-t border-border">
                 Need urgent help? Call our emergency hotline:{" "}
-                <strong>+234 (0) 817 4432</strong>
+                <strong>+234 (0) 817 877 4580</strong>
               </p>
             </div>
           )}
@@ -249,8 +246,7 @@ function StatusProgress({
   status: IncidentTrackingResult["status"];
 }) {
   // Map the 4 statuses onto a 3-step pipeline
-  const currentStep =
-    status === "new" ? 0 : status === "reviewing" ? 1 : 2;
+  const currentStep = status === "new" ? 0 : status === "reviewing" ? 1 : 2;
 
   const finalLabel = status === "closed" ? "Closed" : "Resolved";
   const steps = [
@@ -271,7 +267,7 @@ function StatusProgress({
           const isLast = i === steps.length - 1;
           return (
             <div key={i} className="flex-1 flex items-start">
-              <div className="flex flex-col items-center flex-shrink-0 w-24">
+              <div className="flex flex-col items-center shrink-0 w-24">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
                     isComplete
@@ -327,7 +323,7 @@ function StatusProgress({
           }
           size={22}
           color="currentColor"
-          className="text-primary flex-shrink-0 mt-0.5"
+          className="text-primary shrink-0 mt-0.5"
         />
         <div>
           <div className="font-bold text-foreground">{copy.label}</div>

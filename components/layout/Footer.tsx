@@ -196,7 +196,7 @@ export default function Footer() {
                 <span className="block font-medium text-primary-foreground">
                   Hotline
                 </span>
-                +234 817 877 4580
+                +234 (0) 817 877 4580
               </li>
               <li className="text-primary-foreground/80">
                 <span className="block font-medium text-primary-foreground">
