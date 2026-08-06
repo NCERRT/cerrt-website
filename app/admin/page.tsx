@@ -10,6 +10,7 @@ import {
   MailAtSign02Icon,
   UserGroupIcon,
   Task01Icon,
+  ChatUserIcon,
 } from "@hugeicons/core-free-icons";
 import { getAdvisoriesAction } from "@/app/actions/advisories";
 import { getIncidentStatsAction } from "@/app/actions/incidentReports";
@@ -75,7 +76,8 @@ export default function AdminDashboard() {
     {
       href: "/admin/advisories",
       label: "Manage Advisories",
-      description: "Create, edit, and publish security advisories for the public",
+      description:
+        "Create, edit, and publish security advisories for the public",
       icon: FileScriptIcon,
     },
     {
@@ -83,6 +85,12 @@ export default function AdminDashboard() {
       label: "Review Reports",
       description: "Analyze, assign severity, and resolve reported incidents",
       icon: Alert02Icon,
+    },
+    {
+      href: "/admin/contact",
+      label: "Contact Submissions",
+      description: "Review and manage inquiries from the public contact form",
+      icon: ChatUserIcon,
     },
     {
       href: "/admin/statistics",
@@ -101,13 +109,15 @@ export default function AdminDashboard() {
           {
             href: "/admin/team",
             label: "Manage Team",
-            description: "Invite new admin members and suspend or restore access",
+            description:
+              "Invite new admin members and suspend or restore access",
             icon: UserGroupIcon,
           },
           {
             href: "/admin/audit-logs",
             label: "Security Audit Logs",
-            description: "Track system authentication activity and administrative logs",
+            description:
+              "Track system authentication activity and administrative logs",
             icon: Task01Icon,
           },
         ]

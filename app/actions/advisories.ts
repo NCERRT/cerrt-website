@@ -79,31 +79,31 @@ export async function getAdvisoriesAction(
       ...a,
       fileUrl: a.fileKey ? await getDownloadUrl(a.fileKey, a.fileName || undefined) : null,
       posterItems: await Promise.all(
-        (a as any).posterItems?.map(async (p: any) => ({
+        (a as unknown as { posterItems?: { imageKey: string; fileName: string | null }[] }).posterItems?.map(async (p) => ({
           ...p,
           fileUrl: await getDownloadUrl(p.imageKey, p.fileName),
         })) || []
       ),
     }))
-  ) as any;
+  ) as unknown as AdvisoryDetailWithUrls[];
 }
 
 export async function getAdvisoryBySlugAction(
   slug: string,
 ): Promise<AdvisoryDetailWithUrls | null> {
-  const a: any = await getAdvisoryBySlug(slug);
+  const a = await getAdvisoryBySlug(slug) as unknown as { fileKey?: string | null; fileName?: string | null; posterItems?: { imageKey: string; fileName: string | null }[] } | null;
   if (!a) return null;
 
   return {
     ...a,
     fileUrl: a.fileKey ? await getDownloadUrl(a.fileKey, a.fileName || undefined) : null,
     posterItems: await Promise.all(
-      (a.posterItems || []).map(async (p: any) => ({
+      (a.posterItems || []).map(async (p) => ({
         ...p,
         fileUrl: await getDownloadUrl(p.imageKey, p.fileName),
       }))
     ),
-  };
+  } as unknown as AdvisoryDetailWithUrls;
 }
 
 /** Revalidate every page that displays advisories. */
@@ -215,7 +215,7 @@ export async function updateAdvisoryAction(
     }
   }
 
-  let slug = current.slug || slugify(parsed.data.title);
+  const slug = current.slug || slugify(parsed.data.title);
 
   const { type, title, overview, category, severity, advisoryId, tags } = parsed.data;
 
@@ -273,7 +273,7 @@ export async function updateAdvisoryAction(
 export async function deleteAdvisoryAction(id: string): Promise<void> {
   await requireAuth();
 
-  const advisory: any = await getAdvisoryById(id);
+  const advisory = await getAdvisoryById(id) as unknown as { fileKey?: string | null; posterItems?: { imageKey: string }[] } | null;
   if (!advisory) {
     throw new Error("Advisory not found");
   }

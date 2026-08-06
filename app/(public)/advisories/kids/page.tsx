@@ -170,7 +170,7 @@ export default function KidsAdvisoryPage() {
                 .map((advisory, index) => (
                   <AdvisoryCard
                     key={advisory.id}
-                    advisory={advisory as any}
+                    advisory={advisory as unknown as React.ComponentProps<typeof AdvisoryCard>["advisory"]}
                     index={index}
                   />
                 ))}

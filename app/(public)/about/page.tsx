@@ -73,14 +73,12 @@ export default function AboutPage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-slide-in-up">
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden">
+            <div className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift relative overflow-hidden">
               {/* Accent corner */}
               <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full group-hover:scale-150 transition-transform duration-500"></div>
-              {/* Top accent line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
 
               <div className="mb-6 relative z-10">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                   <HugeiconsIcon
                     icon={Target03Icon}
                     size={32}
@@ -99,14 +97,12 @@ export default function AboutPage() {
                 systems and services.
               </p>
             </div>
-            <div className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden">
+            <div className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift relative overflow-hidden">
               {/* Accent corner */}
               <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full group-hover:scale-150 transition-transform duration-500"></div>
-              {/* Top accent line */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
 
               <div className="mb-6 relative z-10">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                   <HugeiconsIcon
                     icon={Telescope01Icon}
                     size={32}
@@ -203,13 +199,10 @@ export default function AboutPage() {
             {values.map((value, index) => (
               <div
                 key={index}
-                className="group bg-white border-2 border-border rounded-2xl p-8 text-center hover-lift card-interactive relative overflow-hidden"
+                className="group bg-white border-2 border-border rounded-2xl p-8 text-center hover-lift relative overflow-hidden"
               >
-                {/* Top accent line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
                 <div className="flex justify-center mb-6 relative z-10">
-                  <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                  <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                     <HugeiconsIcon
                       icon={value.icon}
                       size={40}
@@ -251,11 +244,8 @@ export default function AboutPage() {
             {partners.map((partner, index) => (
               <div
                 key={index}
-                className="group bg-white border-2 border-border rounded-2xl p-10 flex flex-col items-center justify-center hover-lift card-interactive relative overflow-hidden"
+                className="group bg-white border-2 border-border rounded-2xl p-10 flex flex-col items-center justify-center hover-lift relative overflow-hidden"
               >
-                {/* Top accent line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
                 <Image
                   src={partner.logo}
                   width={100}
@@ -296,7 +286,7 @@ export default function AboutPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/contact"
-              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary font-bold rounded-lg hover:bg-white/90 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300"
+              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary font-bold rounded-lg hover:bg-white/90 hover:shadow-2xl transition-all duration-300"
             >
               Contact Us
               <svg
@@ -315,7 +305,7 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/services"
-              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300"
+              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary hover:shadow-2xl transition-all duration-300"
             >
               Our Services
               <svg

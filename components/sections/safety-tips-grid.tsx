@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 interface TipItem {
   title: string;
   description: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any;
 }
 
@@ -24,17 +25,16 @@ export default function SafetyTipsGrid({
       {tips.map((tip, index) => (
         <div
           key={index}
-          className={`group bg-white border-2 rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden animate-slide-in-up ${
+          className={`group bg-white border-2 rounded-2xl p-8 hover-lift relative overflow-hidden animate-slide-in-up ${
             isKids ? "border-primary/20 text-center" : "border-border"
           }`}
           style={{ animationDelay: `${index * 0.1}s` }}
         >
-          {/* Top accent line */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
-          <div className={`mb-6 flex ${isKids ? "justify-center" : "justify-center md:justify-start"}`}>
+          <div
+            className={`mb-6 flex ${isKids ? "justify-center" : "justify-center md:justify-start"}`}
+          >
             <div
-              className={`bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300 ${
+              className={`bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-105 transition-all duration-300 ${
                 isKids ? "w-20 h-20 animate-float" : "w-16 h-16"
               }`}
               style={isKids ? { animationDelay: `${index * 0.5}s` } : undefined}

@@ -22,7 +22,7 @@ export default function ErrorPage({
     // Server-side digest errors are already logged by Next; this catches
     // any client-side render errors so we can surface them in dev.
     if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
+       
       console.error(error);
     }
   }, [error]);

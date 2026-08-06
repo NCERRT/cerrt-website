@@ -72,6 +72,7 @@ export function AdvisoryForm({
   const [posterItems, setPosterItems] = useState<{
     id: string;
     file: File | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     existingItem?: any;
   }[]>(
     advisory?.posterItems?.map((p) => ({
@@ -156,7 +157,8 @@ export function AdvisoryForm({
         fileMeta = await res.json();
       }
 
-      let uploadedPosterItems: any[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const uploadedPosterItems: any[] = [];
       if (formData.type === "poster") {
         let order = 0;
         for (const item of posterItems) {
@@ -197,9 +199,11 @@ export function AdvisoryForm({
       };
 
       if (advisory) {
-        await updateAdvisoryAction(advisory.id, payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateAdvisoryAction(advisory.id, payload as any);
       } else {
-        await createAdvisoryAction(payload);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await createAdvisoryAction(payload as any);
       }
 
       toast.success("Advisory saved successfully");
@@ -393,7 +397,7 @@ export function AdvisoryForm({
                 />
                 {item.existingItem && !item.file && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Current: {item.existingItem.fileName}
+                    Current: {item.existingItem.fileName as string}
                   </p>
                 )}
               </div>

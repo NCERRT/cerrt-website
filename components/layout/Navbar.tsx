@@ -78,9 +78,6 @@ export default function Navbar() {
                   <div className="absolute inset-0 bg-primary/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
               </div>
-              {/* <span className="text-2xl font-bold text-primary group-hover:text-primary-light transition-colors hidden sm:block">
-                NITDA CERRT
-              </span> */}
             </Link>
 
             {/* Desktop Navigation */}
@@ -185,7 +182,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={() => setIsReportModalOpen(true)}
-                className="group cursor-pointer relative inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:bg-primary-light hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                className="group cursor-pointer relative inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:bg-primary-light hover:shadow-lg transition-all duration-300 overflow-hidden"
               >
                 <span className="relative z-10">REPORT INCIDENT</span>
                 <svg

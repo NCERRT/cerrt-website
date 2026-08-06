@@ -93,17 +93,11 @@ export default function ServicesPage() {
             {services.map((service, index) => (
               <div
                 key={index}
-                className="group relative bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive flex flex-col overflow-hidden"
+                className="group relative bg-white border-2 border-border rounded-2xl p-8 hover-lift flex flex-col overflow-hidden"
               >
-                {/* Accent corner */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full group-hover:scale-150 transition-transform duration-500"></div>
-
-                {/* Top accent line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
                 {/* Icon and Title */}
                 <div className="flex items-start gap-4 mb-6 relative z-10">
-                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                     <HugeiconsIcon
                       icon={service.icon}
                       size={32}
@@ -195,7 +189,7 @@ export default function ServicesPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/contact"
-              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary font-bold rounded-lg hover:bg-white/90 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300"
+              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary font-bold rounded-lg hover:bg-white/90 hover:shadow-2xl transition-all duration-300"
             >
               Contact Us
               <svg
@@ -214,7 +208,7 @@ export default function ServicesPage() {
             </Link>
             <Link
               href="/about"
-              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+              className="group cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary hover:shadow-2xl transition-all duration-300"
             >
               Learn About Us
               <svg

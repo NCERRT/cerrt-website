@@ -8,6 +8,7 @@ export async function logAction(params: {
   description: string;
   targetId?: string | null;
   targetType?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: any;
   actorOverride?: { id: string | null; email: string; name: string };
 }) {

@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import {
   createContactSubmission,
   updateContactStatus,
+  listContactSubmissions,
 } from "@/lib/server/contactSubmissions";
+import type { ContactStatus } from "@prisma/client";
 import { requireAuth } from "@/lib/server/auth";
 import { checkRateLimit } from "@/lib/server/rateLimit";
 import {
@@ -62,4 +64,12 @@ export async function updateContactStatusAction(
 
   await updateContactStatus(id, statusResult.data);
   revalidatePath("/admin/contact");
+}
+
+/**
+ * Get all contact submissions (admin only).
+ */
+export async function getContactSubmissionsAction(status?: ContactStatus) {
+  await requireAuth();
+  return listContactSubmissions(status);
 }

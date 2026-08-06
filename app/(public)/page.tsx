@@ -7,8 +7,6 @@ import {
   Alert02Icon,
   Search01Icon,
   UserLove02Icon,
-  Calendar01Icon,
-  IdentificationIcon,
   Download01Icon,
 } from "@hugeicons/core-free-icons";
 import Carousel from "@/components/ui/Carousel";
@@ -81,14 +79,6 @@ export default function Home() {
     "/hero-images/NITDA25-CHD-AWARENESS-6.jpg",
   ];
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-NG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date);
-  };
-
   return (
     <main className="flex flex-col">
       {/* Hero Section */}
@@ -119,7 +109,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => setIsReportModalOpen(true)}
-                  className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-light hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+                  className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-light hover:shadow-xl transition-all duration-300"
                 >
                   Report Incident
                   <svg
@@ -138,7 +128,7 @@ export default function Home() {
                 </button>
                 <Link
                   href="/advisories"
-                  className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+                  className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl transition-all duration-300"
                 >
                   View Advisories
                   <svg
@@ -192,13 +182,10 @@ export default function Home() {
             {services.map((service, index) => (
               <div
                 key={index}
-                className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive cursor-pointer relative overflow-hidden"
+                className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift cursor-pointer relative overflow-hidden"
               >
-                {/* Accent bar */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-
                 <div className="mb-6 relative">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                     <HugeiconsIcon
                       icon={service.icon}
                       size={32}
@@ -206,8 +193,6 @@ export default function Home() {
                       className="text-primary group-hover:text-white transition-colors"
                     />
                   </div>
-                  {/* Decorative circle */}
-                  <div className="absolute -top-2 -right-2 w-8 h-8 border-2 border-primary/20 rounded-full group-hover:scale-150 group-hover:opacity-0 transition-all duration-500"></div>
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
                   {service.title}
@@ -240,7 +225,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <Link
               href="/services"
-              className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+              className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl transition-all duration-300"
             >
               View All Services
               <svg
@@ -289,7 +274,11 @@ export default function Home() {
               {recentAdvisories.map((advisory, index) => (
                 <AdvisoryCard
                   key={advisory.id}
-                  advisory={advisory as any}
+                  advisory={
+                    advisory as unknown as React.ComponentProps<
+                      typeof AdvisoryCard
+                    >["advisory"]
+                  }
                   index={index}
                 />
               ))}
@@ -298,7 +287,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <Link
               href="/advisories"
-              className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              className="group cursor-pointer inline-flex items-center justify-center px-8 py-4 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl transition-all duration-300"
             >
               View All Advisories
               <svg
@@ -337,7 +326,7 @@ export default function Home() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift card-interactive flex flex-col"
+                className="group bg-white border-2 border-border rounded-2xl p-8 hover-lift flex flex-col"
               >
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">

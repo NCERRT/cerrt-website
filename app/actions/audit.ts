@@ -36,7 +36,7 @@ export async function getAuditLogsAction(params: {
   const pageSize = params.pageSize || 20;
   const skip = (page - 1) * pageSize;
 
-  const where: any = {};
+  const where: Record<string, unknown> = {};
 
   // Search keyword filter
   if (params.search) {

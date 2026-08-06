@@ -141,10 +141,9 @@ export default function ContactPage() {
 
           <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {/* Emergency Incident Reporting */}
-            <div className="group bg-white border-2 border-destructive/30 rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden animate-slide-in-up">
-              <div className="absolute top-0 left-0 w-full h-1 bg-destructive transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+            <div className="group bg-white border-2 border-destructive/30 rounded-2xl p-8 hover-lift relative overflow-hidden animate-slide-in-up">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-destructive group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-destructive group-hover:scale-105 transition-all duration-300">
                   <HugeiconsIcon
                     icon={Alert02Icon}
                     size={28}
@@ -166,12 +165,11 @@ export default function ContactPage() {
 
             {/* General Inquiries */}
             <div
-              className="group bg-white border-2 border-blue-500/30 rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
+              className="group bg-white border-2 border-blue-500/30 rounded-2xl p-8 hover-lift relative overflow-hidden animate-slide-in-up"
               style={{ animationDelay: "0.1s" }}
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-500 group-hover:scale-105 transition-all duration-300">
                   <HugeiconsIcon
                     icon={Message01Icon}
                     size={28}
@@ -193,12 +191,11 @@ export default function ContactPage() {
 
             {/* Advisory & Consultation */}
             <div
-              className="group bg-white border-2 border-green-500/30 rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
+              className="group bg-white border-2 border-green-500/30 rounded-2xl p-8 hover-lift relative overflow-hidden animate-slide-in-up"
               style={{ animationDelay: "0.2s" }}
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-green-500 group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-green-500 group-hover:scale-105 transition-all duration-300">
                   <HugeiconsIcon
                     icon={FileScriptIcon}
                     size={28}
@@ -219,12 +216,11 @@ export default function ContactPage() {
 
             {/* Training & Capacity Building */}
             <div
-              className="group bg-white border-2 border-purple-500/30 rounded-2xl p-8 hover-lift card-interactive relative overflow-hidden animate-slide-in-up"
+              className="group bg-white border-2 border-purple-500/30 rounded-2xl p-8 hover-lift relative overflow-hidden animate-slide-in-up"
               style={{ animationDelay: "0.3s" }}
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-purple-500 group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-purple-500 group-hover:scale-105 transition-all duration-300">
                   <HugeiconsIcon
                     icon={UserGroupIcon}
                     size={28}
@@ -258,10 +254,9 @@ export default function ContactPage() {
               </h2>
 
               <div className="space-y-4">
-                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift card-interactive relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift relative overflow-hidden">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                       <HugeiconsIcon
                         icon={Call02Icon}
                         size={24}
@@ -283,10 +278,9 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift card-interactive relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift relative overflow-hidden">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                       <HugeiconsIcon
                         icon={MailAtSign02Icon}
                         size={24}
@@ -305,10 +299,9 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift card-interactive relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift relative overflow-hidden">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                       <HugeiconsIcon
                         icon={Location01Icon}
                         size={24}
@@ -330,10 +323,9 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift card-interactive relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+                <div className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift relative overflow-hidden">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-105 transition-all duration-300">
                       <HugeiconsIcon
                         icon={Clock01Icon}
                         size={24}
@@ -371,7 +363,7 @@ export default function ContactPage() {
                 </p>
                 <a
                   href="tel:+2348178774580"
-                  className="inline-flex items-center justify-center w-full px-6 py-3 bg-destructive text-white font-bold rounded-lg hover:bg-destructive/90 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                  className="inline-flex items-center justify-center w-full px-6 py-3 bg-destructive text-white font-bold rounded-lg hover:bg-destructive/90 hover:shadow-lg transition-all duration-300"
                 >
                   Call Emergency Line
                 </a>
@@ -569,7 +561,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="group cursor-pointer w-full px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary-light hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 relative overflow-hidden"
+                    className="group cursor-pointer w-full px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary-light hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 relative overflow-hidden"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       {isSubmitting ? "Sending Message..." : "Send Message"}

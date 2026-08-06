@@ -17,6 +17,7 @@ import {
   MailAtSign02Icon,
   UserGroupIcon,
   Task01Icon,
+  ChatUserIcon,
 } from "@hugeicons/core-free-icons";
 
 export default function AdminLayout({
@@ -168,6 +169,11 @@ function AdminDashboard({
       href: "/admin/reports",
       label: "Incident Reports",
       icon: Alert02Icon,
+    },
+    {
+      href: "/admin/contact",
+      label: "Contact Submissions",
+      icon: ChatUserIcon,
     },
     {
       href: "/admin/subscribers",

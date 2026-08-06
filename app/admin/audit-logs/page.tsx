@@ -65,6 +65,7 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     if (user?.role === "superadmin") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadData();
     }
   }, [user, loadData]);
@@ -149,19 +150,20 @@ export default function AuditLogsPage() {
           <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
             Action Group:
           </label>
-          <Select
-            value={actionType}
-            onValueChange={handleFilterChange}
-          >
-            <SelectTrigger className="w-[180px] sm:w-[240px]">
+          <Select value={actionType} onValueChange={handleFilterChange}>
+            <SelectTrigger className="w-45 sm:w-60">
               <SelectValue placeholder="All Actions" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Actions</SelectItem>
               <SelectItem value="AUTH">Authentication (AUTH_*)</SelectItem>
               <SelectItem value="USER">User Management (USER_*)</SelectItem>
-              <SelectItem value="SUBSCRIBERS">Subscriber Operations (SUBSCRIBERS_*)</SelectItem>
-              <SelectItem value="INCIDENT">Incident Actions (INCIDENT_*)</SelectItem>
+              <SelectItem value="SUBSCRIBERS">
+                Subscriber Operations (SUBSCRIBERS_*)
+              </SelectItem>
+              <SelectItem value="INCIDENT">
+                Incident Actions (INCIDENT_*)
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -224,7 +226,9 @@ export default function AuditLogsPage() {
                           </span>
                         </>
                       ) : (
-                        <span className="text-gray-500 italic">System / Anonymous</span>
+                        <span className="text-gray-500 italic">
+                          System / Anonymous
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap">
@@ -234,7 +238,9 @@ export default function AuditLogsPage() {
                       {log.description}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 font-mono whitespace-nowrap">
-                      {log.ipAddress || <span className="text-gray-400">—</span>}
+                      {log.ipAddress || (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -247,8 +253,12 @@ export default function AuditLogsPage() {
         {totalPages > 1 && (
           <div className="flex justify-between items-center p-4 border-t-2 border-gray-200 flex-wrap gap-3">
             <span className="text-sm text-gray-600">
-              Showing page <strong className="font-semibold text-gray-900">{page}</strong> of{" "}
-              <strong className="font-semibold text-gray-900">{totalPages}</strong> ({totalCount} total logs)
+              Showing page{" "}
+              <strong className="font-semibold text-gray-900">{page}</strong> of{" "}
+              <strong className="font-semibold text-gray-900">
+                {totalPages}
+              </strong>{" "}
+              ({totalCount} total logs)
             </span>
             <div className="flex gap-2">
               <Button

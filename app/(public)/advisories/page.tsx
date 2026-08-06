@@ -1,13 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Calendar01Icon,
-  IdentificationIcon,
-  Download01Icon,
-} from "@hugeicons/core-free-icons";
 import {
   getAdvisoriesAction,
   type AdvisoryDetailWithUrls,
@@ -27,28 +20,7 @@ export default function AdvisoriesPage() {
       .catch(() => setAdvisories([]));
   }, []);
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return "bg-destructive text-white";
-      case "high":
-        return "bg-warning text-white";
-      case "medium":
-        return "bg-accent text-white";
-      case "low":
-        return "bg-muted text-muted-foreground";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-NG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date);
-  };
+  // formatDate removed
 
   return (
     <main className="flex flex-col">

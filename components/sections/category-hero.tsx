@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 interface CategoryHeroProps {
   badge?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon?: any;
   title: React.ReactNode;
   description: string;
