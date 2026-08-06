@@ -18,6 +18,7 @@ export function getIncidentReportById(id: string) {
 }
 
 export interface CreateIncidentReportData {
+  title?: string;
   type: string;
   description: string;
   contactName: string;

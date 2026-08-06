@@ -97,6 +97,7 @@ export const advisoryTypeSchema = z.enum(["standard", "poster"]);
 // Incident Report Schema
 // ============================================================
 export const incidentReportSchema = z.object({
+  title: requiredString(LIMITS.TITLE_MAX, "Incident Title / Subject"),
   type: incidentTypeSchema,
   description: requiredString(LIMITS.DESCRIPTION_MAX, "Description"),
   contactName: requiredString(LIMITS.NAME_MAX, "Name"),

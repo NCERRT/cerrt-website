@@ -20,6 +20,7 @@ export default function ReportIncidentModal({
     email: "",
     phone: "",
     organization: "",
+    title: "",
     incidentType: "security-breach",
     severity: "high" as "critical" | "high" | "medium" | "low",
     description: "",
@@ -48,6 +49,7 @@ export default function ReportIncidentModal({
 
     // Validate with Zod before submitting (immediate feedback)
     const parseResult = incidentReportSchema.safeParse({
+      title: formData.title,
       type: formData.incidentType,
       description: formData.description,
       contactName: formData.name,
@@ -86,6 +88,7 @@ export default function ReportIncidentModal({
         email: "",
         phone: "",
         organization: "",
+        title: "",
         incidentType: "security-breach",
         severity: "high",
         description: "",
@@ -324,6 +327,26 @@ export default function ReportIncidentModal({
                         <option value="low">Low - Minor Impact</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
+                      Incident Title / Subject *
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      required
+                      maxLength={200}
+                      className="w-full px-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                      placeholder="e.g. Unauthorized access attempt on portal"
+                    />
                   </div>
 
                   <div>

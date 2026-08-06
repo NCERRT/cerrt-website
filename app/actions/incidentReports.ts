@@ -30,6 +30,7 @@ import {
  * Returns the generated tracking code so the reporter can check status later.
  */
 export async function submitIncidentReportAction(input: {
+  title?: string;
   type: string;
   description: string;
   contactName: string;
@@ -49,6 +50,7 @@ export async function submitIncidentReportAction(input: {
   const trackingCode = generateTrackingCode();
 
   await createIncidentReport({
+    title: parsed.data.title,
     type: parsed.data.type,
     description: parsed.data.description,
     contactName: parsed.data.contactName,

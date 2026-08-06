@@ -46,18 +46,77 @@ export function ReportDetails({
 
   return (
     <div className="space-y-6">
+      {report.title && (
+        <div>
+          <Label className="text-sm text-gray-600">Subject / Title</Label>
+          <div className="font-semibold text-base text-gray-900">{report.title}</div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-sm text-gray-600">Type</Label>
+          <Label className="text-sm text-gray-600">Type (Reporter)</Label>
           <div className="font-medium">{report.type}</div>
         </div>
         <div>
-          <Label className="text-sm text-gray-600">Severity</Label>
+          <Label className="text-sm text-gray-600">Severity (Reporter)</Label>
           <div className="font-medium">
             {report.severity || <span className="text-gray-400">-</span>}
           </div>
         </div>
       </div>
+
+      {/* TheHive Integration Section */}
+      {(report.thehiveCaseId || report.ticketId || report.hiveStatus) && (
+        <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800">
+              TheHive Integration
+            </h4>
+            {report.hiveStatus && (
+              <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                {report.hiveStatus}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {report.ticketId && (
+              <div>
+                <span className="text-gray-500 text-xs block">Ticket ID</span>
+                <span className="font-mono font-medium">{report.ticketId}</span>
+              </div>
+            )}
+            {report.thehiveCaseId && (
+              <div>
+                <span className="text-gray-500 text-xs block">Case ID</span>
+                <span className="font-mono font-medium">{report.thehiveCaseId}</span>
+              </div>
+            )}
+            {report.hiveType && (
+              <div>
+                <span className="text-gray-500 text-xs block">Analyst Type</span>
+                <span className="font-medium text-blue-900">{report.hiveType}</span>
+              </div>
+            )}
+            {report.hiveSeverity && (
+              <div>
+                <span className="text-gray-500 text-xs block">Analyst Severity</span>
+                <span className="font-medium text-blue-900">{report.hiveSeverity}</span>
+              </div>
+            )}
+          </div>
+
+          {report.hiveSummary && (
+            <div>
+              <span className="text-gray-500 text-xs block mb-1">Analyst Summary / Notes</span>
+              <div className="p-3 bg-white border border-blue-100 rounded-lg text-sm text-gray-800 whitespace-pre-wrap">
+                {report.hiveSummary}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <Label className="text-sm text-gray-600">Description</Label>

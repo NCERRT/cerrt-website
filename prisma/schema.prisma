@@ -163,6 +163,7 @@ model DefacementStat {
 model IncidentReport {
   id           String         @id @default(cuid())
   trackingCode String?        @unique // human-friendly public lookup code (CERRT-XXXX-XXXX)
+  title        String?
   type         String
   description  String
   contactName  String
@@ -175,6 +176,13 @@ model IncidentReport {
   reviewedById String?
   reviewedAt   DateTime?
   notes        String?
+  ticketId     String?
+  thehiveCaseId String?
+  hiveStatus   String?
+  hiveSummary  String?
+  hiveType     String?
+  hiveSeverity String?
+  updatedAt    DateTime?      @updatedAt
 
   reviewedBy User? @relation(fields: [reviewedById], references: [id])
 
