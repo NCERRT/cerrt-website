@@ -20,16 +20,7 @@
       "prisma",
       "@prisma/client",
       "@prisma/engines"
-    ],
-    "overrides": {
-      "postcss": "^8.5.10",
-      "hono": "^4.12.25",
-      "@hono/node-server": "^1.19.13",
-      "@babel/core": "^7.29.1",
-      "esbuild": "^0.28.1",
-      "brace-expansion@<1.1.13": "1.1.13",
-      "brace-expansion@>=5.0.0 <5.0.6": "5.0.6"
-    }
+    ]
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1079.0",
@@ -48,7 +39,7 @@
     "clsx": "^2.1.1",
     "ioredis": "^5.10.1",
     "lucide-react": "^1.8.0",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "nodemailer": "^9.0.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -66,7 +57,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.11",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",

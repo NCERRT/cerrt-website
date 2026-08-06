@@ -1,0 +1,14 @@
+packages:
+  - '.'
+
+overrides:
+  postcss: '^8.5.23'
+  hono: '^4.12.34'
+  '@hono/node-server': '^2.0.5'
+  '@babel/core': '^7.29.1'
+  esbuild: '^0.28.1'
+  'brace-expansion@<1.1.17': '^1.1.17'
+  'brace-expansion@>=3.0.0 <5.0.8': '^5.0.8'
+  fast-uri: '^3.1.4'
+  valibot: '^1.4.2'
+  sharp: '^0.35.0'
