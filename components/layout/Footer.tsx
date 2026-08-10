@@ -158,14 +158,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/track"
-                  className="text-primary-foreground/80 cursor-pointer hover:text-primary-foreground text-sm transition-colors"
-                >
-                  Track an Incident
-                </Link>
-              </li>
-              <li>
                 <a
                   href="/documents/nitda-cerrt-pgp-public-key.pdf"
                   target="_blank"

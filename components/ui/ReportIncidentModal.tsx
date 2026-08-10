@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon, CancelCircleIcon } from "@hugeicons/core-free-icons";
+import {
+  Alert02Icon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+} from "@hugeicons/core-free-icons";
 import { incidentReportSchema, formatZodError } from "@/lib/schemas";
 import { submitIncidentReportAction } from "@/app/actions/incidentReports";
 
@@ -31,8 +35,6 @@ export default function ReportIncidentModal({
     "idle" | "success" | "error"
   >("idle");
   const [validationError, setValidationError] = useState<string>("");
-  const [trackingCode, setTrackingCode] = useState<string>("");
-  const [copied, setCopied] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -68,11 +70,8 @@ export default function ReportIncidentModal({
     setSubmitStatus("idle");
 
     try {
-      const result = await submitIncidentReportAction(parseResult.data);
-
-      setTrackingCode(result.trackingCode);
+      await submitIncidentReportAction(parseResult.data);
       setSubmitStatus("success");
-      // Don't auto-close — the user needs to copy the tracking code first.
     } catch (error) {
       console.error("Error submitting report:", error);
       setSubmitStatus("error");
@@ -94,20 +93,8 @@ export default function ReportIncidentModal({
         description: "",
       });
       setSubmitStatus("idle");
-      setTrackingCode("");
-      setCopied(false);
     }
     onClose();
-  };
-
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(trackingCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard might be blocked — code is still visible on-screen
-    }
   };
 
   if (!isOpen) return null;
@@ -161,21 +148,23 @@ export default function ReportIncidentModal({
         {/* Content */}
         <div className="p-6">
           {/* Warning Banner */}
-          <div className="mb-8 p-5 bg-warning/10 border-2 border-warning/30 rounded-xl flex items-start gap-4">
-            <div className="w-10 h-10 bg-warning/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-2xl">⚠️</span>
+          {submitStatus !== "success" && (
+            <div className="mb-8 p-5 bg-warning/10 border-2 border-warning/30 rounded-xl flex items-start gap-4">
+              <div className="w-10 h-10 bg-warning/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <div>
+                <h4 className="font-bold text-warning mb-1">
+                  Critical Incidents
+                </h4>
+                <p className="text-sm text-foreground/80 font-medium leading-relaxed">
+                  For active/ongoing incidents requiring immediate response,
+                  please call our emergency hotline immediately at{" "}
+                  <strong className="text-warning">+234 (0) 817 877 4580</strong>.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-warning mb-1">
-                Critical Incidents
-              </h4>
-              <p className="text-sm text-foreground/80 font-medium leading-relaxed">
-                For active/ongoing incidents requiring immediate response,
-                please call our emergency hotline immediately at{" "}
-                <strong className="text-warning">+234 (0) 817 877 4580</strong>.
-              </p>
-            </div>
-          </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {submitStatus !== "success" && (
@@ -383,40 +372,24 @@ export default function ReportIncidentModal({
             )}
 
             {submitStatus === "success" && (
-              <div className="p-6 bg-success/10 border-2 border-success/30 rounded-xl space-y-4">
-                <div className="text-success font-semibold flex items-center gap-2">
-                  ✓ Incident reported successfully
+              <div className="py-6 text-center space-y-4">
+                <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto">
+                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={36} />
                 </div>
-                <p className="text-sm text-foreground/80">
-                  Save your tracking code below — you&apos;ll use it (with the
-                  email you provided) to check the status of your report at any
-                  time.
-                </p>
-                <div className="bg-white rounded-lg border-2 border-success/40 p-4">
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                    Your tracking code
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <code className="flex-1 font-mono text-lg sm:text-xl font-bold text-foreground select-all break-all">
-                      {trackingCode}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={copyCode}
-                      className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
-                    >
-                      {copied ? "Copied" : "Copy"}
-                    </button>
-                  </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-foreground font-serif">
+                    Report Submitted Successfully
+                  </h3>
+                  <p className="text-sm text-foreground/80 max-w-md mx-auto leading-relaxed">
+                    Thank you for reporting this incident. Our Incident Response Team has received your submission and is reviewing the details.
+                  </p>
                 </div>
-                <a
-                  href="/track"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                >
-                  Track your report →
-                </a>
+                <div className="pt-4 border-t border-border max-w-md mx-auto">
+                  <p className="text-sm text-foreground/80">
+                    We will contact you directly via email at{" "}
+                    <strong className="text-primary font-semibold">{formData.email}</strong> regarding updates or if additional information is required.
+                  </p>
+                </div>
               </div>
             )}
 

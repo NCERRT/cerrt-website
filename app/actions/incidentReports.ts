@@ -6,6 +6,7 @@ import {
   updateIncidentReportStatus,
   getIncidentStats,
   listIncidentReports,
+  getIncidentReportById,
   findIncidentByTrackingCode,
 } from "@/lib/server/incidentReports";
 import { requireAuth } from "@/lib/server/auth";
@@ -20,7 +21,6 @@ import {
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/server/audit";
 import {
-  generateTrackingCode,
   isValidTrackingCode,
   normalizeTrackingCode,
 } from "@/lib/server/trackingCode";
@@ -38,7 +38,7 @@ export async function submitIncidentReportAction(input: {
   contactPhone: string;
   organization: string;
   severity: string;
-}): Promise<{ trackingCode: string }> {
+}): Promise<void> {
   const parsed = incidentReportSchema.safeParse(input);
   if (!parsed.success) {
     throw new Error(formatZodError(parsed.error));
@@ -46,8 +46,6 @@ export async function submitIncidentReportAction(input: {
 
   // Rate limit by email
   await checkRateLimit(parsed.data.contactEmail, "incident_report");
-
-  const trackingCode = generateTrackingCode();
 
   await createIncidentReport({
     title: parsed.data.title,
@@ -58,13 +56,10 @@ export async function submitIncidentReportAction(input: {
     contactPhone: parsed.data.contactPhone,
     organization: parsed.data.organization,
     severity: parsed.data.severity,
-    trackingCode,
   });
 
   revalidatePath("/cerrt-ops/reports");
   revalidatePath("/cerrt-ops");
-
-  return { trackingCode };
 }
 
 /**
@@ -116,6 +111,11 @@ export async function lookupIncidentTrackingAction(input: {
 export async function getIncidentReportsAction(status?: IncidentStatus) {
   await requireAuth();
   return listIncidentReports(status);
+}
+
+export async function getIncidentReportByIdAction(id: string) {
+  await requireAuth();
+  return getIncidentReportById(id);
 }
 
 /**

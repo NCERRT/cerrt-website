@@ -26,7 +26,7 @@ export interface CreateIncidentReportData {
   contactPhone: string;
   organization: string;
   severity: Severity;
-  trackingCode: string;
+  trackingCode?: string;
 }
 
 export function createIncidentReport(data: CreateIncidentReportData) {

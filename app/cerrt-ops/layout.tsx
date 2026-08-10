@@ -268,7 +268,10 @@ function AdminDashboard({
 
           <nav className="space-y-2">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                item.href === "/cerrt-ops"
+                  ? pathname === "/cerrt-ops"
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}

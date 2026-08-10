@@ -1,14 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, CheckmarkCircle02Icon, Clock01Icon } from "@hugeicons/core-free-icons";
 import type { IncidentReport, IncidentStatus } from "@prisma/client";
@@ -16,7 +11,6 @@ import {
   getIncidentReportsAction,
   getIncidentStatsAction,
 } from "@/app/actions/incidentReports";
-import { ReportDetails } from "@/components/admin/report-details";
 
 export default function ReportsPage() {
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | undefined>(
@@ -30,9 +24,6 @@ export default function ReportsPage() {
     resolved: number;
     closed: number;
   } | null>(null);
-  const [selectedReport, setSelectedReport] = useState<IncidentReport | null>(
-    null,
-  );
 
   const loadData = useCallback(() => {
     getIncidentReportsAction(statusFilter)
@@ -54,7 +45,6 @@ export default function ReportsPage() {
       count: stats?.total || 0,
       icon: Alert02Icon,
       bgClass: "bg-gray-50 text-gray-600 border border-gray-200",
-      hoverBgClass: "group-hover:bg-gray-600 group-hover:text-white",
       activeBgClass: "bg-gray-600 text-white",
     },
     {
@@ -63,7 +53,6 @@ export default function ReportsPage() {
       count: stats?.new || 0,
       icon: Alert02Icon,
       bgClass: "bg-red-50 text-red-600 border border-red-100",
-      hoverBgClass: "group-hover:bg-red-600 group-hover:text-white",
       activeBgClass: "bg-red-600 text-white",
     },
     {
@@ -72,7 +61,6 @@ export default function ReportsPage() {
       count: stats?.reviewing || 0,
       icon: Clock01Icon,
       bgClass: "bg-amber-50 text-amber-600 border border-amber-100",
-      hoverBgClass: "group-hover:bg-amber-600 group-hover:text-white",
       activeBgClass: "bg-amber-600 text-white",
     },
     {
@@ -81,7 +69,6 @@ export default function ReportsPage() {
       count: stats?.resolved || 0,
       icon: CheckmarkCircle02Icon,
       bgClass: "bg-green-50 text-green-600 border border-green-100",
-      hoverBgClass: "group-hover:bg-green-600 group-hover:text-white",
       activeBgClass: "bg-green-600 text-white",
     },
     {
@@ -90,7 +77,6 @@ export default function ReportsPage() {
       count: stats?.closed || 0,
       icon: CheckmarkCircle02Icon,
       bgClass: "bg-gray-50 text-gray-500 border border-gray-200",
-      hoverBgClass: "group-hover:bg-gray-500 group-hover:text-white",
       activeBgClass: "bg-gray-500 text-white",
     },
   ];
@@ -102,59 +88,67 @@ export default function ReportsPage() {
           Incident Reports
         </h1>
         <p className="text-gray-600 mt-2">
-          Review and manage incident reports from users
+          Review and respond to incident reports submitted by the public
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        {statusCounts.map((stat) => {
-          const isActive = statusFilter === stat.value;
+      {/* Filter Tabs */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        {statusCounts.map((filter) => {
+          const Icon = filter.icon;
+          const isSelected = statusFilter === filter.value;
           return (
             <button
-              key={stat.label}
-              onClick={() => setStatusFilter(stat.value as "new" | "reviewing" | "resolved" | "closed" | undefined)}
-              className={`bg-white rounded-xl border-2 p-6 text-left hover:shadow-lg transition-all duration-200 group hover:-translate-y-0.5 cursor-pointer ${
-                isActive
-                  ? "border-primary"
-                  : "border-gray-200"
+              key={filter.label}
+              onClick={() => setStatusFilter(filter.value as IncidentStatus)}
+              className={`p-4 rounded-[14px] transition-all text-left group cursor-pointer ${
+                isSelected
+                  ? filter.activeBgClass
+                  : "bg-white hover:bg-gray-50 border border-gray-200"
               }`}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                    isActive
-                      ? stat.activeBgClass
-                      : `${stat.bgClass} ${stat.hoverBgClass}`
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    isSelected ? "bg-white/20 text-white" : filter.bgClass
                   }`}
                 >
-                  <HugeiconsIcon
-                    icon={stat.icon}
-                    size={20}
-                    color="currentColor"
-                  />
+                  <HugeiconsIcon icon={Icon} size={16} />
                 </div>
+                <span
+                  className={`text-xl font-bold ${
+                    isSelected ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {filter.count}
+                </span>
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors duration-200">
-                {stat.count}
+              <div
+                className={`text-sm font-semibold ${
+                  isSelected ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {filter.label}
               </div>
-              <div className="text-sm text-gray-600">{stat.label}</div>
             </button>
           );
         })}
       </div>
 
-      {/* Reports List */}
-      <div className="bg-white rounded-xl border-2 border-gray-200">
+      {/* Table */}
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
-                  Type
+                  Subject / Title
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
-                  Contact
+                  Category
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                  Reporter
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
                   Severity
@@ -174,16 +168,24 @@ export default function ReportsPage() {
               {reports?.map((report) => (
                 <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-gray-900">
+                    <Link
+                      href={`/cerrt-ops/reports/${report.id}`}
+                      className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors block max-w-xs truncate"
+                    >
+                      {report.title || `Incident #${report.id.slice(-6)}`}
+                    </Link>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-medium text-gray-700">
                       {report.type}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 font-medium">
                       {report.contactName || "Anonymous"}
                     </div>
                     {report.contactEmail && (
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-gray-500">
                         {report.contactEmail}
                       </div>
                     )}
@@ -220,13 +222,11 @@ export default function ReportsPage() {
                     {new Date(report.submittedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedReport(report)}
-                    >
-                      View Details
-                    </Button>
+                    <Link href={`/cerrt-ops/reports/${report.id}`}>
+                      <Button variant="outline" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -240,27 +240,6 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
-
-      {/* Report Details Dialog */}
-      {selectedReport && (
-        <Dialog
-          open={!!selectedReport}
-          onOpenChange={() => setSelectedReport(null)}
-        >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Incident Report Details</DialogTitle>
-            </DialogHeader>
-            <ReportDetails
-              report={selectedReport}
-              onClose={() => setSelectedReport(null)}
-              onSaved={loadData}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }
-
-
