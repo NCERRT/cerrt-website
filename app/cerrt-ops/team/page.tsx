@@ -42,7 +42,7 @@ export default function TeamPage() {
   // Superadmin-only page. Redirect regular admins away.
   useEffect(() => {
     if (!isLoading && user && user.role !== "superadmin") {
-      router.push("/admin");
+      router.push("/cerrt-ops");
     }
   }, [user, isLoading, router]);
 
@@ -250,7 +250,11 @@ function InviteForm({ onSuccess }: { onSuccess: () => void }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await inviteAdminAction({ email, name });
+      const res = await inviteAdminAction({ email, name });
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
       toast.success(`Invite sent to ${email.trim().toLowerCase()}`);
       onSuccess();
     } catch (err) {
@@ -321,7 +325,11 @@ function ResendButton({ userId, email }: { userId: string; email: string }) {
   const handleResend = async () => {
     setSending(true);
     try {
-      await resendInviteAction(userId);
+      const res = await resendInviteAction(userId);
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
       toast.success(`Invite resent to ${email}`);
     } catch (err) {
       toast.error((err as Error).message || "Failed to resend invite");
@@ -372,7 +380,11 @@ function ToggleActiveButton({
 
       setLoading(true);
       try {
-        await toggleTeamMemberActiveAction(id);
+        const res = await toggleTeamMemberActiveAction(id);
+        if (!res.success) {
+          toast.error(res.error);
+          return;
+        }
         toast.success("Team member reactivated");
         onUpdated();
       } catch (err) {
@@ -391,7 +403,11 @@ function ToggleActiveButton({
 
       setLoading(true);
       try {
-        await toggleTeamMemberActiveAction(id);
+        const res = await toggleTeamMemberActiveAction(id);
+        if (!res.success) {
+          toast.error(res.error);
+          return;
+        }
         toast.success("Team member deactivated");
         onUpdated();
       } catch (err) {

@@ -34,7 +34,11 @@ function ResetPasswordForm() {
 
     setLoading(true);
     try {
-      await resetPasswordAction(token, newPassword);
+      const res = await resetPasswordAction(token, newPassword);
+      if (!res.success) {
+        setError(res.error);
+        return;
+      }
       toast.success(
         "Password reset successfully. You can now sign in with your new password.",
       );

@@ -83,7 +83,7 @@ export async function sendInviteEmail(
   name: string,
   tempPassword: string,
 ): Promise<void> {
-  const loginUrl = `${APP_URL}/admin/login`;
+  const loginUrl = `${APP_URL}/cerrt-ops/login`;
 
   const body = `
     <p style="margin:0 0 16px;">Hi <strong>${name}</strong>,</p>

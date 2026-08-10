@@ -45,8 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const u = await signInAction(email, password);
-    setUser(u);
+    const res = await signInAction(email, password);
+    if (!res.success) {
+      throw new Error(res.error);
+    }
+    if (res.data) {
+      setUser(res.data);
+    }
   };
 
   const signOut = async () => {
@@ -55,8 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const changePassword = async (current: string, newPw: string) => {
-    const u = await changePasswordAction(current, newPw);
-    setUser(u);
+    const res = await changePasswordAction(current, newPw);
+    if (!res.success) {
+      throw new Error(res.error);
+    }
+    if (res.data) {
+      setUser(res.data);
+    }
   };
 
   return (

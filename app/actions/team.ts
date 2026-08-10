@@ -9,6 +9,7 @@ import { sendInviteEmail } from "@/lib/server/email";
 import { z } from "zod";
 import { formatZodError, LIMITS } from "@/lib/schemas";
 import { logAction } from "@/lib/server/audit";
+import type { ActionResult } from "@/lib/types/actionResult";
 
 // 72-hour temp password validity
 const TEMP_PASSWORD_TTL_MS = 72 * 60 * 60 * 1000;
@@ -94,54 +95,63 @@ export async function getTeamMembersAction(): Promise<TeamMember[]> {
 }
 
 /**
- * Invite a new admin. Creates the user with a temp password
- * (72-hour expiry) and emails them the credentials. Superadmin-only.
+ * Invite a new admin user (superadmin-only).
+ * Generates a high-entropy temporary password, stores a hash in the database,
+ * and dispatches an invitation email with instructions.
  */
 export async function inviteAdminAction(input: {
   email: string;
   name: string;
-}): Promise<{ email: string }> {
-  const me = await requireSuperadmin();
+}): Promise<ActionResult<{ email: string }>> {
+  try {
+    const me = await requireSuperadmin();
 
-  const parsed = inviteSchema.safeParse(input);
-  if (!parsed.success) throw new Error(formatZodError(parsed.error));
+    const parsed = inviteSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
 
-  const { email, name } = parsed.data;
+    const { email, name } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    throw new Error(`A user with email ${email} already exists.`);
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return {
+        success: false,
+        error: `A user with email ${email} already exists.`,
+      };
+    }
+
+    const tempPassword = generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    const expiresAt = new Date(Date.now() + TEMP_PASSWORD_TTL_MS);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        passwordHash,
+        role: "admin",
+        mustChangePassword: true,
+        tempPasswordExpiresAt: expiresAt,
+        createdById: me.id,
+      },
+    });
+
+    await sendInviteEmail(email, name, tempPassword);
+
+    await logAction({
+      action: "USER_INVITE",
+      description: `Invited new administrator ${name} (${email})`,
+      targetId: user.id,
+      targetType: "User",
+    });
+
+    revalidatePath("/cerrt-ops/team");
+    return { success: true, data: { email } };
+  } catch (err) {
+    const error = err as Error;
+    return { success: false, error: error.message || "Failed to invite administrator." };
   }
-
-  const tempPassword = generateTempPassword();
-  const passwordHash = await bcrypt.hash(tempPassword, 10);
-  const expiresAt = new Date(Date.now() + TEMP_PASSWORD_TTL_MS);
-
-  const user = await prisma.user.create({
-    data: {
-      email,
-      name,
-      passwordHash,
-      role: "admin",
-      mustChangePassword: true,
-      tempPasswordExpiresAt: expiresAt,
-      createdById: me.id,
-    },
-  });
-
-  // Send the invite BEFORE returning. If email fails we throw and the user
-  // record still exists — the superadmin can then "Resend Invite" to retry.
-  await sendInviteEmail(email, name, tempPassword);
-
-  await logAction({
-    action: "USER_INVITE",
-    description: `Invited new administrator ${name} (${email})`,
-    targetId: user.id,
-    targetType: "User",
-  });
-
-  revalidatePath("/cerrt-ops/team");
-  return { email };
 }
 
 /**
@@ -150,37 +160,44 @@ export async function inviteAdminAction(input: {
  */
 export async function resendInviteAction(
   userId: string,
-): Promise<{ email: string }> {
-  await requireSuperadmin();
+): Promise<ActionResult<{ email: string }>> {
+  try {
+    await requireSuperadmin();
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new Error("User not found");
-  if (!user.mustChangePassword) {
-    throw new Error(
-      "This user has already completed setup and no longer needs an invite.",
-    );
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { success: false, error: "User not found" };
+    if (!user.mustChangePassword) {
+      return {
+        success: false,
+        error:
+          "This user has already completed setup and no longer needs an invite.",
+      };
+    }
+
+    const tempPassword = generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    const expiresAt = new Date(Date.now() + TEMP_PASSWORD_TTL_MS);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        mustChangePassword: true,
+        tempPasswordExpiresAt: expiresAt,
+      },
+    });
+
+    // Invalidate any existing sessions for the invitee
+    await prisma.session.deleteMany({ where: { userId } });
+
+    await sendInviteEmail(user.email, user.name, tempPassword);
+
+    revalidatePath("/cerrt-ops/team");
+    return { success: true, data: { email: user.email } };
+  } catch (err) {
+    const error = err as Error;
+    return { success: false, error: error.message || "Failed to resend invite." };
   }
-
-  const tempPassword = generateTempPassword();
-  const passwordHash = await bcrypt.hash(tempPassword, 10);
-  const expiresAt = new Date(Date.now() + TEMP_PASSWORD_TTL_MS);
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      passwordHash,
-      mustChangePassword: true,
-      tempPasswordExpiresAt: expiresAt,
-    },
-  });
-
-  // Invalidate any existing sessions for the invitee
-  await prisma.session.deleteMany({ where: { userId } });
-
-  await sendInviteEmail(user.email, user.name, tempPassword);
-
-  revalidatePath("/cerrt-ops/team");
-  return { email: user.email };
 }
 
 /**
@@ -189,44 +206,48 @@ export async function resendInviteAction(
  */
 export async function toggleTeamMemberActiveAction(
   userId: string,
-): Promise<{ success: boolean; isDeactivated: boolean }> {
-  const me = await requireSuperadmin();
+): Promise<ActionResult<{ isDeactivated: boolean }>> {
+  try {
+    const me = await requireSuperadmin();
 
-  if (userId === me.id) {
-    throw new Error("You cannot deactivate your own account.");
-  }
+    if (userId === me.id) {
+      return { success: false, error: "You cannot deactivate your own account." };
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  const nextDeactivatedState = !user.isDeactivated;
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { isDeactivated: nextDeactivatedState },
-  });
-
-  if (nextDeactivatedState) {
-    // Force log out: delete all active sessions of this user
-    await prisma.session.deleteMany({
-      where: { userId },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
     });
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    const nextDeactivatedState = !user.isDeactivated;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isDeactivated: nextDeactivatedState },
+    });
+
+    if (nextDeactivatedState) {
+      // Force log out: delete all active sessions of this user
+      await prisma.session.deleteMany({
+        where: { userId },
+      });
+    }
+
+    await logAction({
+      action: nextDeactivatedState
+        ? "USER_DEACTIVATE"
+        : "USER_REACTIVATE",
+      description: `${nextDeactivatedState ? "Deactivated" : "Reactivated"} user ${user.email}`,
+      targetId: user.id,
+      targetType: "User",
+    });
+
+    revalidatePath("/cerrt-ops/team");
+    return { success: true, data: { isDeactivated: nextDeactivatedState } };
+  } catch (err) {
+    const error = err as Error;
+    return { success: false, error: error.message || "Failed to update member status." };
   }
-
-  await logAction({
-    action: nextDeactivatedState ? "USER_DEACTIVATE" : "USER_REACTIVATE",
-    description: nextDeactivatedState
-      ? `Deactivated administrator account for ${user.name} (${user.email})`
-      : `Reactivated administrator account for ${user.name} (${user.email})`,
-    targetId: user.id,
-    targetType: "User",
-  });
-
-  revalidatePath("/cerrt-ops/team");
-
-  return { success: true, isDeactivated: nextDeactivatedState };
 }
