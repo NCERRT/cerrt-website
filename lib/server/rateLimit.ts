@@ -42,6 +42,11 @@ const RATE_LIMITS = {
     windowSec: 60 * 60, // 1 hour
     message: "Too many password reset requests. Please try again later.",
   },
+  mda_respond: {
+    maxAttempts: 10,
+    windowSec: 15 * 60, // 15 minutes
+    message: "Too many response submissions. Please try again later.",
+  },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

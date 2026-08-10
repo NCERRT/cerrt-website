@@ -59,6 +59,11 @@ enum ContactStatus {
   closed
 }
 
+enum SenderType {
+  analyst
+  mda_poc
+}
+
 // ============================================================
 // Models
 // ============================================================
@@ -186,9 +191,45 @@ model IncidentReport {
 
   reviewedBy User? @relation(fields: [reviewedById], references: [id])
 
+  secureTokens       SecureToken[]
+  caseCommunications CaseCommunication[]
+
   @@index([status])
   @@index([submittedAt])
   @@map("incident_reports")
+}
+
+model SecureToken {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  cerrtCaseId String
+  taskLogId   String   @unique
+  isUsed      Boolean  @default(false)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  incidentReport IncidentReport @relation(fields: [cerrtCaseId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([cerrtCaseId])
+  @@map("secure_tokens")
+}
+
+model CaseCommunication {
+  id             String     @id @default(cuid())
+  cerrtCaseId    String
+  thehiveCaseId  String?
+  senderType     SenderType
+  messageBody    String
+  attachmentKey  String?
+  attachmentName String?
+  createdAt      DateTime   @default(now())
+
+  incidentReport IncidentReport @relation(fields: [cerrtCaseId], references: [id], onDelete: Cascade)
+
+  @@index([cerrtCaseId])
+  @@index([createdAt])
+  @@map("case_communications")
 }
 
 model Subscriber {

@@ -9,6 +9,8 @@ import {
   getIncidentReportById,
   findIncidentByTrackingCode,
 } from "@/lib/server/incidentReports";
+import { getCaseCommunications } from "@/lib/server/caseCommunications";
+import { getEvidenceDownloadUrl } from "@/lib/server/storage";
 import { requireAuth } from "@/lib/server/auth";
 import type { IncidentStatus, Severity } from "@prisma/client";
 import { checkRateLimit } from "@/lib/server/rateLimit";
@@ -116,6 +118,32 @@ export async function getIncidentReportsAction(status?: IncidentStatus) {
 export async function getIncidentReportByIdAction(id: string) {
   await requireAuth();
   return getIncidentReportById(id);
+}
+
+export async function getCaseCommunicationsAction(cerrtCaseId: string) {
+  await requireAuth();
+  const list = await getCaseCommunications(cerrtCaseId);
+
+  // Attach signed download URLs for evidence images
+  return Promise.all(
+    list.map(async (comm) => {
+      let attachmentUrl: string | undefined = undefined;
+      if (comm.attachmentKey) {
+        try {
+          attachmentUrl = await getEvidenceDownloadUrl(
+            comm.attachmentKey,
+            comm.attachmentName,
+          );
+        } catch {
+          // Fallback if MinIO object is missing
+        }
+      }
+      return {
+        ...comm,
+        attachmentUrl,
+      };
+    }),
+  );
 }
 
 /**

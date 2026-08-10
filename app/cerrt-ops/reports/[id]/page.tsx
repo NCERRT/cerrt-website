@@ -36,6 +36,7 @@ import type { IncidentReport, IncidentStatus } from "@prisma/client";
 import {
   getIncidentReportByIdAction,
   updateIncidentStatusAction,
+  getCaseCommunicationsAction,
 } from "@/app/actions/incidentReports";
 
 export default function IncidentReportDetailPage({
@@ -47,6 +48,9 @@ export default function IncidentReportDetailPage({
   const router = useRouter();
 
   const [report, setReport] = useState<IncidentReport | null>(null);
+  const [communications, setCommunications] = useState<
+    Awaited<ReturnType<typeof getCaseCommunicationsAction>>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [savingNotes, setSavingNotes] = useState(false);
 
@@ -60,13 +64,17 @@ export default function IncidentReportDetailPage({
   const loadReport = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getIncidentReportByIdAction(id);
+      const [data, comms] = await Promise.all([
+        getIncidentReportByIdAction(id),
+        getCaseCommunicationsAction(id).catch(() => []),
+      ]);
       if (!data) {
         toast.error("Incident report not found");
         router.push("/cerrt-ops/reports");
         return;
       }
       setReport(data);
+      setCommunications(comms);
       setStatus(data.status);
       setNotes(data.notes || "");
     } catch {
@@ -298,6 +306,69 @@ export default function IncidentReportDetailPage({
               )}
             </div>
           )}
+
+          {/* Case Communications & Evidence Log */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+                Case Communications & Evidence Log
+              </h2>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-gray-100 rounded-full text-gray-600">
+                {communications.length} {communications.length === 1 ? "entry" : "entries"}
+              </span>
+            </div>
+
+            {communications.length === 0 ? (
+              <p className="text-xs text-gray-500 py-4 text-center">
+                No analyst task logs or MDA responses recorded yet.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {communications.map((comm) => (
+                  <div
+                    key={comm.id}
+                    className={`p-4 rounded-xl border text-sm space-y-2 ${
+                      comm.senderType === "mda_poc"
+                        ? "bg-emerald-50/50 border-emerald-200/60"
+                        : "bg-blue-50/50 border-blue-200/60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-xs font-bold uppercase px-2 py-0.5 rounded-md ${
+                          comm.senderType === "mda_poc"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {comm.senderType === "mda_poc" ? "MDA Contact" : "CERRT Analyst"}
+                      </span>
+                      <span className="text-xs text-gray-500 font-mono">
+                        {new Date(comm.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <p className="text-gray-900 leading-relaxed whitespace-pre-wrap">
+                      {comm.messageBody}
+                    </p>
+
+                    {comm.attachmentUrl && (
+                      <div className="pt-2 border-t border-gray-200/60">
+                        <a
+                          href={comm.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                        >
+                          📎 View Evidence Image ({comm.attachmentName || "Attachment"}) →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Column: Admin Actions & Notes */}

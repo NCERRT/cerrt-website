@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  CreateBucketCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "node:crypto";
@@ -23,6 +24,11 @@ import { resolveStorageConfig } from "../storageEndpoint";
 
 const BUCKET =
   process.env.S3_BUCKET ?? process.env.MINIO_BUCKET ?? "cerrt-advisories";
+
+const EVIDENCE_BUCKET =
+  process.env.S3_EVIDENCE_BUCKET ??
+  process.env.MINIO_EVIDENCE_BUCKET ??
+  "cerrt-case-evidence";
 
 const globalForS3 = globalThis as unknown as {
   s3: S3Client | undefined;
@@ -119,4 +125,112 @@ export async function getDownloadUrl(
  */
 export async function deleteFile(key: string): Promise<void> {
   await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+/**
+ * Generate a unique object key for an evidence file attached to a case communication.
+ */
+export function generateEvidenceFileKey(originalName: string, caseId: string): string {
+  const dot = originalName.lastIndexOf(".");
+  const ext =
+    dot > -1
+      ? originalName
+          .slice(dot + 1)
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+      : "";
+  const id = randomUUID();
+  return ext ? `evidence/${caseId}/${id}.${ext}` : `evidence/${caseId}/${id}`;
+}
+
+/**
+ * Upload an evidence file to the dedicated case evidence bucket.
+ * Auto-creates the bucket if it does not exist yet in local MinIO/S3.
+ */
+export async function uploadEvidenceFile(
+  key: string,
+  buffer: Buffer,
+  contentType: string,
+): Promise<void> {
+  try {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: EVIDENCE_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      }),
+    );
+  } catch (err: unknown) {
+    const error = err as { name?: string; Code?: string; code?: string };
+    const errCode = error.name || error.Code || error.code;
+    if (errCode === "NoSuchBucket" || errCode === "NotFound") {
+      try {
+        await s3.send(new CreateBucketCommand({ Bucket: EVIDENCE_BUCKET }));
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: EVIDENCE_BUCKET,
+            Key: key,
+            Body: buffer,
+            ContentType: contentType,
+          }),
+        );
+        return;
+      } catch {
+        // Fallback to default bucket if evidence bucket creation is restricted
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: BUCKET,
+            Key: key,
+            Body: buffer,
+            ContentType: contentType,
+          }),
+        );
+      }
+    } else {
+      throw err;
+    }
+  }
+}
+
+/**
+ * Generate a presigned URL for downloading/viewing an evidence file from the evidence bucket.
+ */
+export async function getEvidenceDownloadUrl(
+  key: string,
+  fileName?: string | null,
+  expirySeconds = 60 * 60,
+): Promise<string> {
+  // Try evidence bucket first, fallback to main bucket
+  let targetBucket = EVIDENCE_BUCKET;
+  try {
+    const command = new GetObjectCommand({
+      Bucket: targetBucket,
+      Key: key,
+      ...(fileName
+        ? {
+            ResponseContentDisposition: `inline; filename="${fileName.replace(
+              /[\r\n"]/g,
+              "_",
+            )}"`,
+          }
+        : {}),
+    });
+    return await getSignedUrl(s3, command, { expiresIn: expirySeconds });
+  } catch {
+    targetBucket = BUCKET;
+    const command = new GetObjectCommand({
+      Bucket: targetBucket,
+      Key: key,
+      ...(fileName
+        ? {
+            ResponseContentDisposition: `inline; filename="${fileName.replace(
+              /[\r\n"]/g,
+              "_",
+            )}"`,
+          }
+        : {}),
+    });
+    return getSignedUrl(s3, command, { expiresIn: expirySeconds });
+  }
 }
