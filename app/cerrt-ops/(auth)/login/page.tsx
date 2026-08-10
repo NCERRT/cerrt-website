@@ -25,7 +25,7 @@ export default function AdminLogin() {
       console.log("Attempting login...");
       await signIn(email, password);
       console.log("Login successful, redirecting...");
-      router.push("/admin");
+      router.push("/cerrt-ops");
     } catch (err) {
       const error = err as Error;
       console.error("Login error:", err);
@@ -109,7 +109,7 @@ export default function AdminLogin() {
 
             <div className="text-center">
               <Link
-                href="/admin/forgot-password"
+                href="/cerrt-ops/forgot-password"
                 className="text-sm text-primary hover:underline font-semibold"
               >
                 Forgot your password?

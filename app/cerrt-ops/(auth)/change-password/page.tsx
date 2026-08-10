@@ -42,7 +42,7 @@ export default function ChangePasswordPage() {
     try {
       await changePassword(currentPassword, newPassword);
       toast.success("Password changed successfully");
-      router.push("/admin");
+      router.push("/cerrt-ops");
     } catch (err) {
       const error = err as Error;
       setError(error.message || "Failed to change password");

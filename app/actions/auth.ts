@@ -213,7 +213,7 @@ export async function requestPasswordResetAction(
 
   // Send the reset email
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const resetUrl = `${appUrl}/admin/reset-password?token=${rawToken}`;
+  const resetUrl = `${appUrl}/cerrt-ops/reset-password?token=${rawToken}`;
 
   const { sendPasswordResetEmail } = await import("@/lib/server/email");
   await sendPasswordResetEmail(user.email, user.name, resetUrl);

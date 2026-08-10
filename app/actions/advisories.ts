@@ -111,7 +111,7 @@ function revalidateAdvisories() {
   revalidatePath("/");
   revalidatePath("/advisories", "layout");
   revalidatePath("/kids-advisory");
-  revalidatePath("/admin/advisories");
+  revalidatePath("/cerrt-ops/advisories");
 }
 
 export async function createAdvisoryAction(input: AdvisoryInput & {

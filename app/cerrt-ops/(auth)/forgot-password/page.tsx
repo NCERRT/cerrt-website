@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
                 in case. The link expires in 1 hour.
               </div>
               <Link
-                href="/admin/login"
+                href="/cerrt-ops/login"
                 className="inline-block text-sm text-primary hover:underline font-semibold"
               >
                 ← Back to login
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
 
               <div className="text-center">
                 <Link
-                  href="/admin/login"
+                  href="/cerrt-ops/login"
                   className="text-sm text-primary hover:underline font-semibold"
                 >
                   ← Back to login

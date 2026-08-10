@@ -140,7 +140,7 @@ export async function inviteAdminAction(input: {
     targetType: "User",
   });
 
-  revalidatePath("/admin/team");
+  revalidatePath("/cerrt-ops/team");
   return { email };
 }
 
@@ -179,7 +179,7 @@ export async function resendInviteAction(
 
   await sendInviteEmail(user.email, user.name, tempPassword);
 
-  revalidatePath("/admin/team");
+  revalidatePath("/cerrt-ops/team");
   return { email: user.email };
 }
 
@@ -226,7 +226,7 @@ export async function toggleTeamMemberActiveAction(
     targetType: "User",
   });
 
-  revalidatePath("/admin/team");
+  revalidatePath("/cerrt-ops/team");
 
   return { success: true, isDeactivated: nextDeactivatedState };
 }

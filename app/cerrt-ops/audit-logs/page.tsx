@@ -38,7 +38,7 @@ export default function AuditLogsPage() {
   // Superadmin-only page. Redirect regular admins away.
   useEffect(() => {
     if (!isLoading && user && user.role !== "superadmin") {
-      router.push("/admin");
+      router.push("/cerrt-ops");
     }
   }, [user, isLoading, router]);
 

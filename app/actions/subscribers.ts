@@ -35,7 +35,7 @@ export async function subscribeAction(
   }
 
   await createSubscriber(normalized);
-  revalidatePath("/admin/subscribers");
+  revalidatePath("/cerrt-ops/subscribers");
   return { alreadySubscribed: false };
 }
 
@@ -53,7 +53,7 @@ export async function getSubscribersAction() {
 export async function deleteSubscriberAction(id: string): Promise<void> {
   await requireAuth();
   await deleteSubscriber(id);
-  revalidatePath("/admin/subscribers");
+  revalidatePath("/cerrt-ops/subscribers");
 }
 
 /**

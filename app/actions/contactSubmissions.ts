@@ -45,7 +45,7 @@ export async function submitContactAction(input: {
     message: parsed.data.message,
   });
 
-  revalidatePath("/admin/contact");
+  revalidatePath("/cerrt-ops/contact");
 }
 
 /**
@@ -63,7 +63,7 @@ export async function updateContactStatusAction(
   }
 
   await updateContactStatus(id, statusResult.data);
-  revalidatePath("/admin/contact");
+  revalidatePath("/cerrt-ops/contact");
 }
 
 /**

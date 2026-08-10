@@ -31,37 +31,37 @@ export default function AdminLayout({
 
   // Don't redirect if on an auth page (login, change-password, forgot/reset)
   const isAuthPage =
-    pathname === "/admin/login" ||
-    pathname === "/admin/change-password" ||
-    pathname === "/admin/forgot-password" ||
-    pathname === "/admin/reset-password";
+    pathname === "/cerrt-ops/login" ||
+    pathname === "/cerrt-ops/change-password" ||
+    pathname === "/cerrt-ops/forgot-password" ||
+    pathname === "/cerrt-ops/reset-password";
 
   // Redirect to login once we know there is no authenticated user
   useEffect(() => {
     if (!isAuthPage && !isLoading && !user) {
-      router.push("/admin/login");
+      router.push("/cerrt-ops/login");
     }
   }, [user, isLoading, router, isAuthPage]);
 
   // Force password change before accessing any admin page
   useEffect(() => {
     if (!isAuthPage && !isLoading && user?.mustChangePassword) {
-      router.push("/admin/change-password");
+      router.push("/cerrt-ops/change-password");
     }
   }, [user, isLoading, router, isAuthPage]);
 
   // Redirect authenticated users away from login/reset pages
   useEffect(() => {
     if (isAuthPage && !isLoading && user) {
-      if (user.mustChangePassword && pathname !== "/admin/change-password") {
-        router.push("/admin/change-password");
+      if (user.mustChangePassword && pathname !== "/cerrt-ops/change-password") {
+        router.push("/cerrt-ops/change-password");
       } else if (!user.mustChangePassword) {
         if (
-          pathname === "/admin/login" ||
-          pathname === "/admin/forgot-password" ||
-          pathname === "/admin/reset-password"
+          pathname === "/cerrt-ops/login" ||
+          pathname === "/cerrt-ops/forgot-password" ||
+          pathname === "/cerrt-ops/reset-password"
         ) {
-          router.push("/admin");
+          router.push("/cerrt-ops");
         }
       }
     }
@@ -96,7 +96,7 @@ export default function AdminLayout({
 
   // If authenticated user is on an auth page that they shouldn't be on (e.g. login page, but they are logged in), show loading spinner while redirecting.
   if (isAuthPage && user) {
-    if (pathname === "/admin/change-password" && user.mustChangePassword) {
+    if (pathname === "/cerrt-ops/change-password" && user.mustChangePassword) {
       // Allow rendering the change-password page
     } else {
       return (
@@ -114,7 +114,7 @@ export default function AdminLayout({
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/admin/login");
+    router.push("/cerrt-ops/login");
   };
 
   if (!user) {
@@ -151,32 +151,32 @@ function AdminDashboard({
 
   const navItems = [
     {
-      href: "/admin",
+      href: "/cerrt-ops",
       label: "Dashboard",
       icon: LayoutGridIcon,
     },
     {
-      href: "/admin/advisories",
+      href: "/cerrt-ops/advisories",
       label: "Advisories",
       icon: FileScriptIcon,
     },
     {
-      href: "/admin/statistics",
+      href: "/cerrt-ops/statistics",
       label: "Statistics",
       icon: ChartLineData01Icon,
     },
     {
-      href: "/admin/reports",
+      href: "/cerrt-ops/reports",
       label: "Incident Reports",
       icon: Alert02Icon,
     },
     {
-      href: "/admin/contact",
+      href: "/cerrt-ops/contact",
       label: "Contact Submissions",
       icon: ChatUserIcon,
     },
     {
-      href: "/admin/subscribers",
+      href: "/cerrt-ops/subscribers",
       label: "Subscribers",
       icon: MailAtSign02Icon,
     },
@@ -184,12 +184,12 @@ function AdminDashboard({
     ...(userRole === "superadmin"
       ? [
           {
-            href: "/admin/team",
+            href: "/cerrt-ops/team",
             label: "Team",
             icon: UserGroupIcon,
           },
           {
-            href: "/admin/audit-logs",
+            href: "/cerrt-ops/audit-logs",
             label: "Audit Logs",
             icon: Task01Icon,
           },

@@ -38,8 +38,8 @@ export async function getDefacementStatsAction(): Promise<{
 
 function revalidateStats() {
   revalidatePath("/");
-  revalidatePath("/admin/statistics");
-  revalidatePath("/admin");
+  revalidatePath("/cerrt-ops/statistics");
+  revalidatePath("/cerrt-ops");
 }
 
 export async function upsertStatAction(

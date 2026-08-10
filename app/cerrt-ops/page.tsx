@@ -74,32 +74,32 @@ export default function AdminDashboard() {
   // Dynamic quick actions list based on user role
   const quickActions = [
     {
-      href: "/admin/advisories",
+      href: "/cerrt-ops/advisories",
       label: "Manage Advisories",
       description:
         "Create, edit, and publish security advisories for the public",
       icon: FileScriptIcon,
     },
     {
-      href: "/admin/reports",
+      href: "/cerrt-ops/reports",
       label: "Review Reports",
       description: "Analyze, assign severity, and resolve reported incidents",
       icon: Alert02Icon,
     },
     {
-      href: "/admin/contact",
+      href: "/cerrt-ops/contact",
       label: "Contact Submissions",
       description: "Review and manage inquiries from the public contact form",
       icon: ChatUserIcon,
     },
     {
-      href: "/admin/statistics",
+      href: "/cerrt-ops/statistics",
       label: "Update Statistics",
       description: "Add defaced website stats for internal tracking charts",
       icon: ChartLineData01Icon,
     },
     {
-      href: "/admin/subscribers",
+      href: "/cerrt-ops/subscribers",
       label: "Mailing Subscribers",
       description: "List email notification subscribers and export CSV reports",
       icon: MailAtSign02Icon,
@@ -107,14 +107,14 @@ export default function AdminDashboard() {
     ...(user?.role === "superadmin"
       ? [
           {
-            href: "/admin/team",
+            href: "/cerrt-ops/team",
             label: "Manage Team",
             description:
               "Invite new admin members and suspend or restore access",
             icon: UserGroupIcon,
           },
           {
-            href: "/admin/audit-logs",
+            href: "/cerrt-ops/audit-logs",
             label: "Security Audit Logs",
             description:
               "Track system authentication activity and administrative logs",

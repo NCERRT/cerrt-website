@@ -38,7 +38,7 @@ function ResetPasswordForm() {
       toast.success(
         "Password reset successfully. You can now sign in with your new password.",
       );
-      router.push("/admin/login");
+      router.push("/cerrt-ops/login");
     } catch (err) {
       setError((err as Error).message || "Failed to reset password");
     } finally {
@@ -53,7 +53,7 @@ function ResetPasswordForm() {
           This reset link is missing its token. Please request a new one.
         </div>
         <Link
-          href="/admin/forgot-password"
+          href="/cerrt-ops/forgot-password"
           className="inline-block text-sm text-primary hover:underline font-semibold"
         >
           Request a new reset link

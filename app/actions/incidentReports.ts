@@ -61,8 +61,8 @@ export async function submitIncidentReportAction(input: {
     trackingCode,
   });
 
-  revalidatePath("/admin/reports");
-  revalidatePath("/admin");
+  revalidatePath("/cerrt-ops/reports");
+  revalidatePath("/cerrt-ops");
 
   return { trackingCode };
 }
@@ -172,6 +172,6 @@ export async function updateIncidentStatusAction(
     },
   });
 
-  revalidatePath("/admin/reports");
-  revalidatePath("/admin");
+  revalidatePath("/cerrt-ops/reports");
+  revalidatePath("/cerrt-ops");
 }
