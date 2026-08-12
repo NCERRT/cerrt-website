@@ -9,6 +9,7 @@ export interface CreateCaseCommunicationInput {
   messageBody: string;
   attachmentKey?: string;
   attachmentName?: string;
+  attachments?: { key: string; name: string }[];
 }
 
 export function getCaseCommunications(cerrtCaseId: string) {

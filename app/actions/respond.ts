@@ -9,7 +9,8 @@ import {
   uploadEvidenceFile,
 } from "@/lib/server/storage";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILES_COUNT = 3;
 const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 
 export async function validateTokenAction(token: string) {
@@ -22,7 +23,15 @@ export async function validateTokenAction(token: string) {
 export async function submitMdaResponseAction(formData: FormData): Promise<{ success: boolean }> {
   const token = formData.get("token") as string | null;
   const messageBody = formData.get("messageBody") as string | null;
-  const file = formData.get("file") as File | null;
+
+  // Retrieve single or multiple files safely
+  let rawFiles = formData.getAll("files") as File[];
+  if (!rawFiles || rawFiles.length === 0) {
+    const singleFile = formData.get("file") as File | null;
+    if (singleFile) rawFiles = [singleFile];
+  }
+
+  const files = (rawFiles || []).filter((f) => f && f.size > 0);
 
   if (!token || !token.trim()) {
     throw new Error("Invalid or missing token.");
@@ -35,6 +44,10 @@ export async function submitMdaResponseAction(formData: FormData): Promise<{ suc
   const trimmedMessage = messageBody.trim();
   if (trimmedMessage.length > 10000) {
     throw new Error("Response text must not exceed 10,000 characters.");
+  }
+
+  if (files.length > MAX_FILES_COUNT) {
+    throw new Error(`You can upload a maximum of ${MAX_FILES_COUNT} evidence images.`);
   }
 
   // Rate limiting by client IP
@@ -56,26 +69,27 @@ export async function submitMdaResponseAction(formData: FormData): Promise<{ suc
   }
 
   const { tokenData } = validation;
-  let attachmentKey: string | undefined = undefined;
-  let attachmentName: string | undefined = undefined;
+  const attachmentsList: { key: string; name: string }[] = [];
 
-  // File upload processing
-  if (file && file.size > 0) {
+  // Multi-file upload processing
+  for (const file of files) {
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error("Uploaded image must not exceed 10MB.");
+      throw new Error(`File "${file.name}" exceeds the 5MB size limit.`);
     }
 
     if (!ALLOWED_MIME_TYPES.includes(file.type.toLowerCase())) {
-      throw new Error("Only PNG, JPG, and JPEG image evidence uploads are allowed.");
+      throw new Error(`File "${file.name}" is not an allowed format. Only PNG, JPG, and JPEG images are accepted.`);
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    attachmentKey = generateEvidenceFileKey(file.name, tokenData.cerrtCaseId);
-    attachmentName = file.name;
+    const key = generateEvidenceFileKey(file.name, tokenData.cerrtCaseId);
 
-    await uploadEvidenceFile(attachmentKey, buffer, file.type);
+    await uploadEvidenceFile(key, buffer, file.type);
+    attachmentsList.push({ key, name: file.name });
   }
+
+  const primaryAttachment = attachmentsList[0];
 
   // Atomic transaction: Insert communication entry & mark token as used
   await prisma.$transaction([
@@ -84,8 +98,9 @@ export async function submitMdaResponseAction(formData: FormData): Promise<{ suc
         cerrtCaseId: tokenData.cerrtCaseId,
         senderType: "mda_poc",
         messageBody: trimmedMessage,
-        attachmentKey,
-        attachmentName,
+        attachmentKey: primaryAttachment?.key ?? null,
+        attachmentName: primaryAttachment?.name ?? null,
+        attachments: attachmentsList.length > 0 ? attachmentsList : undefined,
       },
     }),
     prisma.secureToken.update({

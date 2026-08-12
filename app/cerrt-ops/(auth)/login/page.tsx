@@ -1,20 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useAuth } from "@/lib/useAuth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Shield01Icon } from "@hugeicons/core-free-icons";
 import PasswordField from "@/components/sections/PasswordField";
 
-export default function AdminLogin() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn } = useAuth();
+
+  const callbackUrl = searchParams.get("callbackUrl");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +25,14 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      console.log("Attempting login...");
       await signIn(email, password);
-      console.log("Login successful, redirecting...");
-      router.push("/cerrt-ops");
+      const targetPath =
+        callbackUrl && callbackUrl.startsWith("/cerrt-ops")
+          ? callbackUrl
+          : "/cerrt-ops";
+      router.push(targetPath);
     } catch (err) {
       const error = err as Error;
-      console.error("Login error:", err);
       setError(error.message || "Invalid email or password");
     } finally {
       setLoading(false);
@@ -36,26 +40,24 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary/10 to-secondary pattern-dots">
-      <div className="max-w-md w-full mx-4">
-        <div className="bg-white rounded-2xl shadow-2xl border-2 border-border p-8">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <HugeiconsIcon
-                icon={Shield01Icon}
-                size={32}
-                color="currentColor"
-                className="text-primary"
-              />
-            </div>
-          </div>
+    <div className="bg-white rounded-2xl shadow-2xl border-2 border-border p-8">
+      <div className="flex justify-center mb-6">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+          <HugeiconsIcon
+            icon={Shield01Icon}
+            size={32}
+            color="currentColor"
+            className="text-primary"
+          />
+        </div>
+      </div>
 
-          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2 font-serif">
-            Admin Login
-          </h1>
-          <p className="text-center text-gray-600 mb-8">
-            Sign in to access the CERRT admin dashboard
-          </p>
+      <h1 className="text-3xl font-bold text-center text-gray-900 mb-2 font-serif">
+        Admin Login
+      </h1>
+      <p className="text-center text-gray-600 mb-8">
+        Sign in to access the CERRT admin dashboard
+      </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -120,7 +122,17 @@ export default function AdminLogin() {
           <p className="text-center text-sm text-gray-600 mt-6">
             Access restricted to authorized personnel only
           </p>
-        </div>
+    </div>
+  );
+}
+
+export default function AdminLogin() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary/10 to-secondary pattern-dots">
+      <div className="max-w-md w-full mx-4">
+        <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );

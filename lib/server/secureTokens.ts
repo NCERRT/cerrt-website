@@ -2,7 +2,12 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 export type TokenValidationResult =
-  | { valid: true; tokenData: NonNullable<Awaited<ReturnType<typeof fetchToken>>> }
+  | {
+      valid: true;
+      tokenData: NonNullable<Awaited<ReturnType<typeof fetchToken>>> & {
+        analystRequest: string | null;
+      };
+    }
   | { valid: false; reason: "not_found" | "already_used" | "expired" };
 
 export async function fetchToken(token: string) {
@@ -58,5 +63,19 @@ export async function validateToken(token: string): Promise<TokenValidationResul
     return { valid: false, reason: "expired" };
   }
 
-  return { valid: true, tokenData: tokenRecord };
+  const latestAnalystMessage = await prisma.caseCommunication.findFirst({
+    where: {
+      cerrtCaseId: tokenRecord.cerrtCaseId,
+      senderType: "analyst",
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return {
+    valid: true,
+    tokenData: {
+      ...tokenRecord,
+      analystRequest: latestAnalystMessage?.messageBody ?? null,
+    },
+  };
 }

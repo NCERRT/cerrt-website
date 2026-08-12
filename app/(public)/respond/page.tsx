@@ -24,12 +24,18 @@ function RespondFormContent() {
 
   const [loading, setLoading] = useState(true);
   const [tokenState, setTokenState] = useState<
-    | { status: "valid"; caseTitle: string; caseType: string; submittedAt: Date }
+    | {
+        status: "valid";
+        caseTitle: string;
+        caseType: string;
+        submittedAt: Date;
+        analystRequest?: string | null;
+      }
     | { status: "error"; reason: "not_found" | "already_used" | "expired" | "missing_token" }
   >({ status: "error", reason: "missing_token" });
 
   const [messageBody, setMessageBody] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -56,6 +62,7 @@ function RespondFormContent() {
           caseTitle: report.title || `Incident Report`,
           caseType: report.type,
           submittedAt: report.submittedAt,
+          analystRequest: res.tokenData.analystRequest,
         });
       }
     } catch {
@@ -71,26 +78,38 @@ function RespondFormContent() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError("");
-    const file = e.target.files?.[0];
-    if (!file) {
-      setSelectedFile(null);
-      return;
-    }
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length === 0) return;
 
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
-    if (!allowedTypes.includes(file.type.toLowerCase())) {
-      setFileError("Only PNG, JPG, and JPEG image evidence uploads are allowed.");
-      setSelectedFile(null);
+    const validNewFiles: File[] = [];
+
+    for (const file of newFiles) {
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        setFileError(`"${file.name}" is not supported. Only PNG, JPG, and JPEG images are allowed.`);
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError(`"${file.name}" exceeds the 5MB size limit.`);
+        return;
+      }
+
+      validNewFiles.push(file);
+    }
+
+    if (selectedFiles.length + validNewFiles.length > 3) {
+      setFileError("You can attach a maximum of 3 evidence images.");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setFileError("Uploaded image must not exceed 10MB.");
-      setSelectedFile(null);
-      return;
-    }
+    setSelectedFiles((prev) => [...prev, ...validNewFiles]);
+    e.target.value = "";
+  };
 
-    setSelectedFile(file);
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFileError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,8 +127,8 @@ function RespondFormContent() {
       const formData = new FormData();
       formData.append("token", rawToken.trim());
       formData.append("messageBody", messageBody.trim());
-      if (selectedFile) {
-        formData.append("file", selectedFile);
+      for (const file of selectedFiles) {
+        formData.append("files", file);
       }
 
       await submitMdaResponseAction(formData);
@@ -224,6 +243,18 @@ function RespondFormContent() {
             </span>
           </div>
 
+          {tokenState.analystRequest && (
+            <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-5 space-y-2">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                <HugeiconsIcon icon={Shield01Icon} size={16} className="text-amber-700" />
+                <span>Request Details From CERRT Analyst</span>
+              </div>
+              <p className="text-sm text-amber-950 whitespace-pre-wrap leading-relaxed">
+                {tokenState.analystRequest}
+              </p>
+            </div>
+          )}
+
           {/* Response Text Area */}
           <div className="space-y-2">
             <label htmlFor="messageBody" className="block text-sm font-semibold text-gray-900">
@@ -246,48 +277,71 @@ function RespondFormContent() {
 
           {/* File Upload */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-900">
-              Evidence Image Attachment (Optional)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-gray-900">
+                Evidence Image Attachments (Optional)
+              </label>
+              <span className="text-xs text-gray-500 font-medium">
+                {selectedFiles.length}/3 images selected
+              </span>
+            </div>
+
             <div className="border-2 border-dashed border-gray-200 hover:border-primary rounded-xl p-6 text-center transition-colors">
               <input
                 type="file"
                 id="evidence-file"
                 accept=".png,.jpg,.jpeg"
+                multiple
+                disabled={selectedFiles.length >= 3}
                 onChange={handleFileChange}
                 className="hidden"
               />
               <label
                 htmlFor="evidence-file"
-                className="cursor-pointer inline-flex flex-col items-center gap-2"
+                className={`inline-flex flex-col items-center gap-2 ${
+                  selectedFiles.length >= 3 ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                }`}
               >
                 <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center">
                   <HugeiconsIcon icon={FileUploadIcon} size={20} />
                 </div>
                 <span className="text-sm font-semibold text-primary">
-                  Click to select screenshot or evidence image
+                  {selectedFiles.length >= 3
+                    ? "Maximum 3 evidence images reached"
+                    : "Click to select screenshot or evidence images"}
                 </span>
                 <span className="text-xs text-gray-500">
-                  Accepted formats: PNG, JPG, JPEG (Max 10MB)
+                  PNG, JPG, or JPEG • Max 5MB per file • Up to 3 images
                 </span>
               </label>
 
-              {selectedFile && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center justify-between text-xs text-gray-800">
-                  <div className="flex items-center gap-2 truncate">
-                    <HugeiconsIcon icon={File02Icon} size={16} className="text-primary shrink-0" />
-                    <span className="font-medium truncate">{selectedFile.name}</span>
-                    <span className="text-gray-500">
-                      ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedFile(null)}
-                    className="text-red-600 hover:underline font-semibold ml-2"
-                  >
-                    Remove
-                  </button>
+              {selectedFiles.length > 0 && (
+                <div className="mt-4 space-y-2 text-left">
+                  {selectedFiles.map((file, idx) => (
+                    <div
+                      key={`${file.name}-${idx}`}
+                      className="p-3 bg-gray-50 rounded-lg flex items-center justify-between text-xs text-gray-800 border border-gray-200"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <HugeiconsIcon
+                          icon={File02Icon}
+                          size={16}
+                          className="text-primary shrink-0"
+                        />
+                        <span className="font-medium truncate">{file.name}</span>
+                        <span className="text-gray-500 shrink-0">
+                          ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(idx)}
+                        className="text-red-600 hover:underline font-semibold ml-2 shrink-0"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

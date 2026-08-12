@@ -223,6 +223,7 @@ model CaseCommunication {
   messageBody    String
   attachmentKey  String?
   attachmentName String?
+  attachments    Json?      // [{ key: string, name: string }]
   createdAt      DateTime   @default(now())
 
   incidentReport IncidentReport @relation(fields: [cerrtCaseId], references: [id], onDelete: Cascade)

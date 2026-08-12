@@ -11,7 +11,7 @@ const PUBLIC_ADMIN_ROUTES = [
 ];
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   // 1. Hard 404 for any legacy /admin requests (makes old path completely dead & hidden)
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
@@ -30,11 +30,16 @@ export function proxy(request: NextRequest) {
     // Check for valid session cookie
     const hasSession = request.cookies.has(SESSION_COOKIE);
 
-    // If unauthenticated, return a 404 (appears non-existent to scanners/unauthenticated users)
+    // If unauthenticated, redirect smoothly to login with callbackUrl
     if (!hasSession) {
-      return NextResponse.rewrite(new URL("/not-found", request.url), {
-        status: 404,
-      });
+      const loginUrl = new URL("/cerrt-ops/login", request.url);
+      const callbackPath = pathname + search;
+
+      if (callbackPath !== "/cerrt-ops" && callbackPath !== "/cerrt-ops/") {
+        loginUrl.searchParams.set("callbackUrl", callbackPath);
+      }
+
+      return NextResponse.redirect(loginUrl);
     }
   }
 

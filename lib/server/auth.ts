@@ -61,6 +61,26 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
+  // Rolling Session: If less than 12 hours remaining, extend session by 24 hours
+  const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+  if (session.expiresAt.getTime() - Date.now() < TWELVE_HOURS_MS) {
+    const newExpiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+    prisma.session
+      .update({
+        where: { id: sessionId },
+        data: { expiresAt: newExpiresAt },
+      })
+      .catch(() => {});
+
+    cookieStore.set(SESSION_COOKIE, sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_DURATION_SEC,
+      path: "/",
+    });
+  }
+
   return {
     id: session.user.id,
     email: session.user.email,

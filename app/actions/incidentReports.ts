@@ -128,19 +128,44 @@ export async function getCaseCommunicationsAction(cerrtCaseId: string) {
   return Promise.all(
     list.map(async (comm) => {
       let attachmentUrl: string | undefined = undefined;
-      if (comm.attachmentKey) {
+      const attachmentItems: { url: string; name: string }[] = [];
+
+      const rawAttachments = comm.attachments as
+        | { key: string; name: string }[]
+        | null;
+
+      if (
+        rawAttachments &&
+        Array.isArray(rawAttachments) &&
+        rawAttachments.length > 0
+      ) {
+        for (const item of rawAttachments) {
+          try {
+            const url = await getEvidenceDownloadUrl(item.key, item.name);
+            attachmentItems.push({ url, name: item.name });
+          } catch {
+            // Ignore missing storage objects
+          }
+        }
+      } else if (comm.attachmentKey) {
         try {
           attachmentUrl = await getEvidenceDownloadUrl(
             comm.attachmentKey,
             comm.attachmentName,
           );
+          attachmentItems.push({
+            url: attachmentUrl,
+            name: comm.attachmentName || "Attachment",
+          });
         } catch {
           // Fallback if MinIO object is missing
         }
       }
+
       return {
         ...comm,
-        attachmentUrl,
+        attachmentUrl: attachmentItems[0]?.url ?? attachmentUrl,
+        attachmentItems,
       };
     }),
   );
