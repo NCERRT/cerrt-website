@@ -47,6 +47,11 @@ const RATE_LIMITS = {
     windowSec: 15 * 60, // 15 minutes
     message: "Too many response submissions. Please try again later.",
   },
+  api_evidence_download: {
+    maxAttempts: 20,
+    windowSec: 60, // 1 minute
+    message: "Too many evidence download requests. Limit is 20 requests per minute.",
+  },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

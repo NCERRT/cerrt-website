@@ -301,3 +301,15 @@ model AuditLog {
   @@index([action])
   @@map("audit_logs")
 }
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  keyHash    String    @unique
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([keyHash])
+  @@map("api_keys")
+}

@@ -234,3 +234,22 @@ export async function getEvidenceDownloadUrl(
     return getSignedUrl(s3, command, { expiresIn: expirySeconds });
   }
 }
+
+/**
+ * Fetch an evidence object stream directly from the evidence storage bucket.
+ */
+export async function getEvidenceFileObject(key: string) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: EVIDENCE_BUCKET,
+      Key: key,
+    });
+    return await s3.send(command);
+  } catch {
+    const command = new GetObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    });
+    return await s3.send(command);
+  }
+}

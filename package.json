@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "create-admin": "tsx scripts/create-admin.ts",
     "cleanup-sessions": "tsx scripts/cleanup-sessions.ts",
-    "seed-token": "tsx scripts/seed-test-token.ts"
+    "seed-token": "tsx scripts/seed-test-token.ts",
+    "generate-api-key": "tsx scripts/generate-api-key.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
