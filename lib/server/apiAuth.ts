@@ -1,3 +1,4 @@
+import "server-only";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
@@ -16,23 +17,28 @@ export async function validateApiKey(request: Request) {
     return { valid: false as const };
   }
 
-  const keyHash = hashApiKey(rawKey);
+  try {
+    const keyHash = hashApiKey(rawKey);
 
-  const apiKeyRecord = await prisma.apiKey.findUnique({
-    where: { keyHash },
-  });
+    const apiKeyRecord = await prisma.apiKey.findUnique({
+      where: { keyHash },
+    });
 
-  if (!apiKeyRecord || !apiKeyRecord.isActive) {
+    if (!apiKeyRecord || !apiKeyRecord.isActive) {
+      return { valid: false as const };
+    }
+
+    // Asynchronously update lastUsedAt without blocking request response
+    prisma.apiKey
+      .update({
+        where: { id: apiKeyRecord.id },
+        data: { lastUsedAt: new Date() },
+      })
+      .catch(() => {});
+
+    return { valid: true as const, apiKey: apiKeyRecord };
+  } catch (err) {
+    console.error("[API Auth] Failed to validate API key:", err);
     return { valid: false as const };
   }
-
-  // Asynchronously update lastUsedAt without blocking request response
-  prisma.apiKey
-    .update({
-      where: { id: apiKeyRecord.id },
-      data: { lastUsedAt: new Date() },
-    })
-    .catch(() => {});
-
-  return { valid: true as const, apiKey: apiKeyRecord };
 }

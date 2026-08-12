@@ -6,26 +6,24 @@ import { checkRateLimit } from "@/lib/server/rateLimit";
 import type { Readable } from "node:stream";
 
 export async function GET(request: NextRequest) {
-  // 1. Rate limiting by IP (20 requests per minute)
-  const clientIp =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "anonymous";
-
-  try {
-    await checkRateLimit(clientIp, "api_evidence_download");
-  } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message || "Rate limit exceeded." },
-      { status: 429 },
-    );
-  }
-
-  // 2. Validate API Key
+  // 1. Validate API Key first (before rate limiting, so unauthenticated
+  //    requests can't burn the rate limit bucket for legitimate callers)
   const auth = await validateApiKey(request);
   if (!auth.valid) {
     return NextResponse.json(
       { error: "Unauthorized. Valid Bearer API key required." },
       { status: 401 },
+    );
+  }
+
+  // 2. Rate limiting by authenticated key ID (20 requests per minute)
+  const rateLimitId = auth.apiKey.id;
+  try {
+    await checkRateLimit(rateLimitId, "api_evidence_download");
+  } catch (err) {
+    return NextResponse.json(
+      { error: (err as Error).message || "Rate limit exceeded." },
+      { status: 429 },
     );
   }
 
