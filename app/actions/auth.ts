@@ -77,6 +77,14 @@ export async function signInAction(
     // Clear the rate limit on successful login
     await resetRateLimit(normalizedEmail, "login");
 
+    await logAction({
+      action: "AUTH_LOGIN_SUCCESS",
+      description: `User ${user.email} (${user.name}) logged in successfully.`,
+      targetId: user.id,
+      targetType: "User",
+      actorOverride: { id: user.id, email: user.email, name: user.name },
+    });
+
     return {
       success: true,
       data: {

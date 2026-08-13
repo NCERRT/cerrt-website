@@ -9,6 +9,8 @@ import {
   uploadEvidenceFile,
 } from "@/lib/server/storage";
 
+import { logAction } from "@/lib/server/audit";
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_FILES_COUNT = 3;
 const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/jpg"];
@@ -108,6 +110,19 @@ export async function submitMdaResponseAction(formData: FormData): Promise<{ suc
       data: { isUsed: true },
     }),
   ]);
+
+  await logAction({
+    action: "MDA_RESPONSE_SUBMIT",
+    description: `MDA contact submitted response for case ${tokenData.cerrtCaseId} (${attachmentsList.length} evidence attachment(s))`,
+    targetId: tokenData.cerrtCaseId,
+    targetType: "IncidentReport",
+    actorOverride: { id: null, email: "mda_poc@external", name: "MDA Point of Contact" },
+    metadata: {
+      cerrtCaseId: tokenData.cerrtCaseId,
+      attachmentCount: attachmentsList.length,
+      attachments: attachmentsList,
+    },
+  });
 
   return { success: true };
 }

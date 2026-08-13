@@ -14,6 +14,7 @@ import {
 } from "@/lib/server/advisories";
 import { deleteFile, getDownloadUrl } from "@/lib/server/storage";
 import { advisorySchema, formatZodError, type AdvisoryInput } from "@/lib/schemas";
+import { logAction } from "@/lib/server/audit";
 
 interface FileMeta {
   fileKey: string;
@@ -151,7 +152,7 @@ export async function createAdvisoryAction(input: AdvisoryInput & {
     };
   }
 
-  await createAdvisory({
+  const created = await createAdvisory({
     slug,
     title,
     description: overview, // fallback for now
@@ -176,6 +177,14 @@ export async function createAdvisoryAction(input: AdvisoryInput & {
         order: p.order,
       })) || []
     }
+  });
+
+  await logAction({
+    action: "ADVISORY_CREATE",
+    description: `Created advisory ${advisoryId}: "${title}" (${category})`,
+    targetId: created.id,
+    targetType: "Advisory",
+    metadata: { advisoryId, title, category, severity, type },
   });
 
   revalidateAdvisories();
@@ -267,13 +276,21 @@ export async function updateAdvisoryAction(
     }
   });
 
+  await logAction({
+    action: "ADVISORY_UPDATE",
+    description: `Updated advisory ${advisoryId}: "${title}" (${category})`,
+    targetId: id,
+    targetType: "Advisory",
+    metadata: { advisoryId, title, category, severity, type },
+  });
+
   revalidateAdvisories();
 }
 
 export async function deleteAdvisoryAction(id: string): Promise<void> {
   await requireAuth();
 
-  const advisory = await getAdvisoryById(id) as unknown as { fileKey?: string | null; posterItems?: { imageKey: string }[] } | null;
+  const advisory = await getAdvisoryById(id) as unknown as { fileKey?: string | null; posterItems?: { imageKey: string }[]; advisoryId?: string; title?: string } | null;
   if (!advisory) {
     throw new Error("Advisory not found");
   }
@@ -296,5 +313,13 @@ export async function deleteAdvisoryAction(id: string): Promise<void> {
   }
 
   await deleteAdvisory(id);
+
+  await logAction({
+    action: "ADVISORY_DELETE",
+    description: `Deleted advisory ${advisory.advisoryId || id}: "${advisory.title || "Untitled"}"`,
+    targetId: id,
+    targetType: "Advisory",
+  });
+
   revalidateAdvisories();
 }

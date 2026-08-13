@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { validateApiKey } from "@/lib/server/apiAuth";
 import { getEvidenceFileObject } from "@/lib/server/storage";
 import { checkRateLimit } from "@/lib/server/rateLimit";
+import { logAction } from "@/lib/server/audit";
 import type { Readable } from "node:stream";
 
 export async function GET(request: NextRequest) {
@@ -61,6 +62,19 @@ export async function GET(request: NextRequest) {
 
     const contentType = storageObject.ContentType || "application/octet-stream";
     const filename = normalizedKey.split("/").pop() || "evidence-file";
+
+    logAction({
+      action: "API_KEY_EVIDENCE_DOWNLOAD",
+      description: `API Key '${auth.apiKey.name}' downloaded evidence file: ${filename}`,
+      targetId: auth.apiKey.id,
+      targetType: "ApiKey",
+      actorOverride: {
+        id: auth.apiKey.id,
+        email: `apikey:${auth.apiKey.name}`,
+        name: auth.apiKey.name,
+      },
+      metadata: { fileKey: normalizedKey, filename, contentType },
+    }).catch(() => {});
 
     // Convert S3 Body stream to Web ReadableStream for Next.js NextResponse
     const nodeStream = storageObject.Body as Readable;

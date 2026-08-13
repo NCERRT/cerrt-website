@@ -14,6 +14,7 @@ import {
   contactStatusSchema,
   formatZodError,
 } from "@/lib/schemas";
+import { logAction } from "@/lib/server/audit";
 
 /**
  * Submit a contact form (public — no auth required).
@@ -63,6 +64,15 @@ export async function updateContactStatusAction(
   }
 
   await updateContactStatus(id, statusResult.data);
+
+  await logAction({
+    action: "CONTACT_STATUS_UPDATE",
+    description: `Updated contact submission status to: ${statusResult.data}`,
+    targetId: id,
+    targetType: "ContactSubmission",
+    metadata: { newStatus: statusResult.data },
+  });
+
   revalidatePath("/cerrt-ops/contact");
 }
 
