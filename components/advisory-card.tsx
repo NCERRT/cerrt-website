@@ -49,19 +49,6 @@ export default function AdvisoryCard({
       className="group bg-white border-2 border-border rounded-2xl p-6 hover-lift relative overflow-hidden animate-slide-in-up flex flex-col h-full"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
-      {/* Accent bar based on severity */}
-      {/* <div
-        className={`absolute top-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left ${
-          advisory.severity === "critical"
-            ? "bg-destructive"
-            : advisory.severity === "high"
-              ? "bg-warning"
-              : advisory.severity === "medium"
-                ? "bg-accent"
-                : "bg-muted-foreground"
-        }`}
-      ></div> */}
-
       {/* Severity & Category Badges */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <span
@@ -124,9 +111,14 @@ export default function AdvisoryCard({
           <span className="font-medium">{formatDate(advisory.date)}</span>
         </div>
 
-        <div className="flex items-center text-primary text-sm font-bold group-hover:translate-x-1 transition-transform relative z-10">
-          View Details
-          <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-1" />
+        <div className="group-hover:translate-x-1 transition-transform">
+          <Link
+            href={detailUrl}
+            className="flex items-center text-primary text-sm font-bold relative z-10"
+          >
+            View Details
+            <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-1" />
+          </Link>
         </div>
       </div>
     </article>

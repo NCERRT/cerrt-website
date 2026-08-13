@@ -5,7 +5,6 @@ import {
   getAdvisoriesAction,
   type AdvisoryDetailWithUrls,
 } from "@/app/actions/advisories";
-import AdvisoryImageGrid from "@/components/sections/AdvisoryImageGrid";
 import SubscribeForm from "@/components/ui/SubscribeForm";
 import AdvisoryCard from "@/components/advisory-card";
 
@@ -77,29 +76,6 @@ export default function AdvisoriesPage() {
         </div>
       </section>
 
-      {/* Visual Advisories Gallery */}
-      {advisories && advisories.length > 0 && (() => {
-        const imageAdvisories = advisories.filter(
-          (a) => a.fileType === "image" && a.fileUrl,
-        );
-        if (imageAdvisories.length === 0) return null;
-        return (
-          <section className="py-16 bg-secondary/30">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-10">
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3 font-serif">
-                  Visual Advisories
-                </h2>
-                <p className="text-muted-foreground">
-                  Posters and infographics for quick reference
-                </p>
-              </div>
-              <AdvisoryImageGrid advisories={imageAdvisories} />
-            </div>
-          </section>
-        );
-      })()}
-
       {/* Advisories Grid */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -113,23 +89,17 @@ export default function AdvisoriesPage() {
                 No advisories available yet. Check back soon!
               </p>
             </div>
-          ) : (() => {
-            const nonImageAdvisories = advisories.filter(
-              (a) => a.fileType !== "image",
-            );
-            if (nonImageAdvisories.length === 0) return null;
-            return (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {nonImageAdvisories.map((advisory, index) => (
-                  <AdvisoryCard
-                    key={advisory.id}
-                    advisory={advisory}
-                    index={index}
-                  />
-                ))}
-              </div>
-            );
-          })()}
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {advisories.map((advisory, index) => (
+                <AdvisoryCard
+                  key={advisory.id}
+                  advisory={advisory}
+                  index={index}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

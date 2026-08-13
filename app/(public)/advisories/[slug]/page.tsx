@@ -169,6 +169,41 @@ export default async function AdvisoryDetailPage({
                 </section>
               )}
 
+              {/* Attached Image / Diagram */}
+              {advisory.fileUrl && advisory.fileType === "image" && (
+                <section className="bg-white rounded-2xl p-8 shadow-sm border border-border">
+                  <h2 className="text-2xl font-bold text-foreground mb-6 border-b border-border pb-4">
+                    Images
+                  </h2>
+                  <div className="relative w-full rounded-xl overflow-hidden border-2 border-border flex flex-col items-center">
+                    <Image
+                      src={advisory.fileUrl}
+                      alt={advisory.fileName || advisory.title}
+                      width={1000}
+                      height={750}
+                      className="object-contain w-full h-auto"
+                      unoptimized
+                    />
+                    <div className="absolute top-4 right-4">
+                      <a
+                        href={advisory.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        className="bg-primary text-primary-foreground p-3 rounded-full hover:bg-primary-light hover:scale-105 shadow-lg backdrop-blur-sm transition-all flex items-center justify-center"
+                        title="Download Image"
+                      >
+                        <HugeiconsIcon
+                          icon={Download01Icon}
+                          size={24}
+                          color="currentColor"
+                        />
+                      </a>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* PDF Download */}
               {advisory.fileUrl && advisory.fileType === "pdf" && (
                 <section className="bg-white rounded-2xl p-8 shadow-sm border border-border text-center">
