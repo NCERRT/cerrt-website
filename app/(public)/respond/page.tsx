@@ -17,6 +17,7 @@ import {
   validateTokenAction,
   submitMdaResponseAction,
 } from "@/app/actions/respond";
+import { compressEvidenceImage } from "@/lib/client/imageCompression";
 
 function RespondFormContent() {
   const searchParams = useSearchParams();
@@ -91,7 +92,7 @@ function RespondFormContent() {
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        setFileError(`"${file.name}" exceeds the 5MB size limit.`);
+        setFileError(`"${file.name}" exceeds the 5MB per-file size limit.`);
         return;
       }
 
@@ -100,6 +101,15 @@ function RespondFormContent() {
 
     if (selectedFiles.length + validNewFiles.length > 3) {
       setFileError("You can attach a maximum of 3 evidence images.");
+      return;
+    }
+
+    const totalPayloadBytes = [...selectedFiles, ...validNewFiles].reduce(
+      (sum, f) => sum + f.size,
+      0
+    );
+    if (totalPayloadBytes > 14 * 1024 * 1024) {
+      setFileError("Total upload size exceeds 14MB. Please attach smaller image files.");
       return;
     }
 
@@ -121,20 +131,36 @@ function RespondFormContent() {
       return;
     }
 
+    const totalPayloadBytes = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+    if (totalPayloadBytes > 14 * 1024 * 1024) {
+      setFormError("Total attachment size exceeds 14MB limit. Please reduce image sizes before submitting.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Compress evidence images in browser before network transmission
+      const optimizedFiles = await Promise.all(
+        selectedFiles.map((file) => compressEvidenceImage(file))
+      );
+
       const formData = new FormData();
       formData.append("token", rawToken.trim());
       formData.append("messageBody", messageBody.trim());
-      for (const file of selectedFiles) {
+      for (const file of optimizedFiles) {
         formData.append("files", file);
       }
 
       await submitMdaResponseAction(formData);
       setSubmitSuccess(true);
     } catch (err) {
-      setFormError((err as Error).message || "Failed to submit response. Please try again.");
+      const errorMsg = (err as Error).message || "";
+      if (errorMsg.includes("Body exceeded") || errorMsg.includes("413") || errorMsg.includes("limit")) {
+        setFormError("The uploaded files exceed the server limit. Please attach smaller images and try again.");
+      } else {
+        setFormError(errorMsg || "Failed to submit response. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
