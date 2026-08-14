@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
+  // Allow up to 16MB for Server Action payloads (evidence uploads: 3 images x 5MB each)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
+
   images: {
     remotePatterns: [
       {
