@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function TrackPage() {
-  redirect("/contact");
+  redirect("/my-reports");
 }

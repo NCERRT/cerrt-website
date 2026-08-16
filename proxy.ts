@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const SESSION_COOKIE = "sessionId";
+const PERSONAL_SESSION_COOKIE = "personalSessionId";
 
 // Public auth routes that unauthenticated users need access to
 const PUBLIC_ADMIN_ROUTES = [
@@ -43,9 +44,24 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // 3. Protect /my-reports/cases routes
+  if (pathname === "/my-reports/cases" || pathname.startsWith("/my-reports/cases/")) {
+    const hasPersonalSession = request.cookies.has(PERSONAL_SESSION_COOKIE);
+    if (!hasPersonalSession) {
+      return NextResponse.redirect(new URL("/my-reports", request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/admin", "/cerrt-ops/:path*", "/cerrt-ops"],
+  matcher: [
+    "/admin/:path*",
+    "/admin",
+    "/cerrt-ops/:path*",
+    "/cerrt-ops",
+    "/my-reports/cases/:path*",
+    "/my-reports/cases",
+  ],
 };
