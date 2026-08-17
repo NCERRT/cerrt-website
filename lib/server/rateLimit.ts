@@ -57,6 +57,11 @@ const RATE_LIMITS = {
     windowSec: 15 * 60, // 15 minutes
     message: "Too many OTP requests. Please wait 15 minutes before requesting another code.",
   },
+  personal_otp_verify: {
+    maxAttempts: 5,
+    windowSec: 15 * 60, // 15 minutes
+    message: "Too many failed verification attempts. Please wait 15 minutes before trying again.",
+  },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

@@ -317,7 +317,7 @@ model ApiKey {
 model EmailOtp {
   id        String   @id @default(cuid())
   email     String
-  otpHash   String   @unique // SHA-256 of the 6-digit numeric code
+  otpHash   String   // SHA-256 of the 6-digit numeric code
   expiresAt DateTime
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())

@@ -167,7 +167,7 @@ export async function sendPasswordResetEmail(
     </p>
 
     <p style="margin:0 0 8px;font-size:13px;color:#718096;">
-      ⏳ This link expires in <strong>1 hour</strong>.
+      This link expires in <strong>1 hour</strong>.
     </p>
     <p style="margin:0;font-size:13px;color:#718096;">
       If you did not request a password reset, you can safely ignore this
@@ -178,6 +178,48 @@ export async function sendPasswordResetEmail(
     from: `CERRT Admin <${EMAIL_USER}>`,
     to,
     subject: "CERRT Admin — Password Reset",
+    html: layout(body),
+  });
+}
+
+/**
+ * Sends a 6-digit OTP verification code for personal access.
+ *
+ * @param to      - Recipient email address
+ * @param otpCode - The 6-digit numeric verification code
+ */
+export async function sendOtpEmail(to: string, otpCode: string): Promise<void> {
+  const body = `
+    <p style="margin:0 0 16px;">Hello,</p>
+
+    <p style="margin:0 0 16px;">
+      You requested access to view your incident reports submitted to <strong>CERRT</strong>. Use the verification code below to complete your login.
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      <tr>
+        <td align="center" style="background-color:#edf2f7;border-left:4px solid #1a365d;padding:20px;border-radius:6px;">
+          <span style="display:block;font-size:12px;color:#718096;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+            Your Verification Code:
+          </span>
+          <span style="font-size:32px;font-weight:800;color:#1a365d;letter-spacing:6px;font-family:monospace;">
+            ${otpCode}
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 8px;font-size:13px;color:#718096;">
+      This verification code is valid for <strong>10 minutes</strong> and can only be used once.
+    </p>
+    <p style="margin:0;font-size:13px;color:#718096;">
+      If you did not request this verification code, please ignore this message.
+    </p>`;
+
+  await transporter.sendMail({
+    from: `CERRT <${EMAIL_USER}>`,
+    to,
+    subject: "CERRT — Your Incident Verification Code",
     html: layout(body),
   });
 }

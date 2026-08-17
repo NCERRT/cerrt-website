@@ -14,6 +14,7 @@ import {
 import {
   requestOtpAction,
   verifyOtpAction,
+  getVerifiedPersonalEmail,
 } from "@/app/actions/personalAccess";
 
 export default function MyReportsAuthPage() {
@@ -32,6 +33,15 @@ export default function MyReportsAuthPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    // Check if user already has a valid personal session
+    getVerifiedPersonalEmail().then((verifiedEmail) => {
+      if (verifiedEmail) {
+        router.push("/my-reports/cases");
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -57,6 +67,10 @@ export default function MyReportsAuthPage() {
 
     try {
       const res = await requestOtpAction(email.trim());
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to send verification code.");
+        return;
+      }
       setSuccessMessage(res.message || "Verification code sent.");
       setStep("otp");
       setResendCooldown(60);
@@ -112,7 +126,11 @@ export default function MyReportsAuthPage() {
     setIsSubmitting(true);
 
     try {
-      await verifyOtpAction(email.trim(), code);
+      const res = await verifyOtpAction(email.trim(), code);
+      if (!res.success) {
+        setErrorMessage(res.error || "Verification failed. Please try again.");
+        return;
+      }
       router.push("/my-reports/cases");
     } catch (err) {
       setErrorMessage((err as Error).message || "Verification failed. Please try again.");

@@ -14,7 +14,10 @@ import {
   BubbleChatIcon,
   File02Icon,
 } from "@hugeicons/core-free-icons";
-import { getPersonalIncidentDetailAction } from "@/app/actions/personalAccess";
+import {
+  getPersonalIncidentDetailAction,
+  PersonalIncidentDetail,
+} from "@/app/actions/personalAccess";
 
 interface CommunicationItem {
   id: string;
@@ -110,12 +113,18 @@ export default function PersonalIncidentDetailPage({
 }) {
   const resolvedParams = use(params);
   const [loading, setLoading] = useState(true);
-  const [incident, setIncident] = useState<IncidentDetail | null>(null);
+  const [incident, setIncident] = useState<PersonalIncidentDetail | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     getPersonalIncidentDetailAction(resolvedParams.id)
-      .then((data) => setIncident(data as unknown as IncidentDetail))
+      .then((res) => {
+        if (!res.success) {
+          setErrorMessage(res.error || "Failed to load report.");
+        } else {
+          setIncident(res.incident || null);
+        }
+      })
       .catch((err) => setErrorMessage((err as Error).message || "Failed to load report."))
       .finally(() => setLoading(false));
   }, [resolvedParams.id]);
@@ -129,20 +138,27 @@ export default function PersonalIncidentDetailPage({
   }
 
   if (errorMessage || !incident) {
+    const isUnauthorized = errorMessage.includes("Unauthorized");
     return (
       <main className="min-h-screen bg-gray-50/50 py-16 px-4">
         <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 border border-border text-center shadow-sm">
-          <div className="w-14 h-14 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 bg-amber-50 text-amber-600 border border-amber-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <HugeiconsIcon icon={InformationCircleIcon} size={28} />
           </div>
-          <h1 className="text-xl font-bold mb-2 font-serif">Report Not Found</h1>
-          <p className="text-sm text-muted-foreground mb-6">{errorMessage || "Unable to access this incident report."}</p>
+          <h1 className="text-xl font-bold mb-2 font-serif">
+            {isUnauthorized ? "Session Expired" : "Report Not Found"}
+          </h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            {isUnauthorized
+              ? "Your 1-hour verification session has expired. Please verify your email address again to access this report."
+              : errorMessage || "Unable to access this incident report."}
+          </p>
           <Link
-            href="/my-reports/cases"
+            href={isUnauthorized ? "/my-reports" : "/my-reports/cases"}
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary-light transition-all"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} size={18} />
-            <span>Back to My Reports</span>
+            <span>{isUnauthorized ? "Re-verify Email" : "Back to My Reports"}</span>
           </Link>
         </div>
       </main>

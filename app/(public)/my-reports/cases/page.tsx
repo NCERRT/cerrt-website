@@ -16,21 +16,9 @@ import {
 import {
   getPersonalIncidentsAction,
   personalSignOutAction,
+  PersonalIncidentSummary,
 } from "@/app/actions/personalAccess";
 import { useRouter } from "next/navigation";
-
-interface IncidentSummary {
-  id: string;
-  ticketId: string | null;
-  thehiveCaseId: string | null;
-  title: string | null;
-  type: string;
-  status: "new" | "reviewing" | "resolved" | "closed";
-  hiveStatus: string | null;
-  severity: "critical" | "high" | "medium" | "low";
-  submittedAt: Date;
-  updatedAt: Date | null;
-}
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -95,14 +83,18 @@ export default function PersonalIncidentsDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string>("");
-  const [incidents, setIncidents] = useState<IncidentSummary[]>([]);
+  const [incidents, setIncidents] = useState<PersonalIncidentSummary[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     getPersonalIncidentsAction()
-      .then((data) => {
-        setEmail(data.verifiedEmail);
-        setIncidents(data.incidents as IncidentSummary[]);
+      .then((res) => {
+        if (!res.success) {
+          setErrorMessage(res.error || "Failed to load incidents.");
+        } else {
+          setEmail(res.verifiedEmail || "");
+          setIncidents(res.incidents || []);
+        }
       })
       .catch((err) => {
         setErrorMessage((err as Error).message || "Failed to load incidents.");
@@ -157,9 +149,25 @@ export default function PersonalIncidentsDashboardPage() {
         </div>
 
         {errorMessage ? (
-          <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
-            <p className="font-bold mb-2">Error</p>
-            <p className="text-sm">{errorMessage}</p>
+          <div className="bg-white rounded-3xl p-8 border border-border shadow-sm text-center max-w-lg mx-auto">
+            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-200">
+              <HugeiconsIcon icon={InformationCircleIcon} size={28} />
+            </div>
+            <h2 className="text-xl font-bold font-serif text-foreground mb-2">
+              {errorMessage.includes("Unauthorized") ? "Session Expired" : "Unable to Load Reports"}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              {errorMessage.includes("Unauthorized")
+                ? "Your 1-hour verification session has expired. Please verify your email again to continue."
+                : errorMessage}
+            </p>
+            <Link
+              href="/my-reports"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary-light transition-all shadow-sm"
+            >
+              <span>Request New Verification Code</span>
+              <HugeiconsIcon icon={ArrowRight01Icon} size={18} />
+            </Link>
           </div>
         ) : incidents.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-border shadow-sm">
