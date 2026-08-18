@@ -52,6 +52,11 @@ const RATE_LIMITS = {
     windowSec: 60, // 1 minute
     message: "Too many evidence download requests. Limit is 20 requests per minute.",
   },
+  api_ingest: {
+    maxAttempts: 30,
+    windowSec: 60, // 1 minute
+    message: "Too many incident ingestion requests. Limit is 30 requests per minute.",
+  },
   personal_otp: {
     maxAttempts: 3,
     windowSec: 15 * 60, // 15 minutes

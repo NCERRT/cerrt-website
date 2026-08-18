@@ -64,6 +64,12 @@ enum SenderType {
   mda_poc
 }
 
+enum SubmissionChannel {
+  web
+  email
+  api
+}
+
 // ============================================================
 // Models
 // ============================================================
@@ -181,13 +187,15 @@ model IncidentReport {
   reviewedById String?
   reviewedAt   DateTime?
   notes        String?
-  ticketId     String?
-  thehiveCaseId String?
-  hiveStatus   String?
-  hiveSummary  String?
-  hiveType     String?
-  hiveSeverity String?
-  updatedAt    DateTime?      @updatedAt
+  ticketId          String?
+  thehiveCaseId     String?
+  hiveStatus        String?
+  hiveSummary       String?
+  hiveType          String?
+  hiveSeverity      String?
+  submissionChannel SubmissionChannel @default(web)
+  emailMessageId    String?           @unique
+  updatedAt         DateTime?         @updatedAt
 
   reviewedBy User? @relation(fields: [reviewedById], references: [id])
 
@@ -196,6 +204,7 @@ model IncidentReport {
 
   @@index([status])
   @@index([submittedAt])
+  @@index([submissionChannel])
   @@map("incident_reports")
 }
 

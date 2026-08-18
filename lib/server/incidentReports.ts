@@ -1,14 +1,20 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import type { IncidentStatus, Severity } from "@prisma/client";
+import type { IncidentStatus, Severity, SubmissionChannel } from "@prisma/client";
 
 /**
  * Data-access layer for incident reports.
  */
 
-export function listIncidentReports(status?: IncidentStatus) {
+export function listIncidentReports(
+  status?: IncidentStatus,
+  submissionChannel?: SubmissionChannel
+) {
   return prisma.incidentReport.findMany({
-    where: status ? { status } : undefined,
+    where: {
+      ...(status ? { status } : {}),
+      ...(submissionChannel ? { submissionChannel } : {}),
+    },
     orderBy: { submittedAt: "desc" },
   });
 }

@@ -12,7 +12,7 @@ import {
 import { getCaseCommunications } from "@/lib/server/caseCommunications";
 import { getEvidenceDownloadUrl } from "@/lib/server/storage";
 import { requireAuth } from "@/lib/server/auth";
-import type { IncidentStatus, Severity } from "@prisma/client";
+import type { IncidentStatus, Severity, SubmissionChannel } from "@prisma/client";
 import { checkRateLimit } from "@/lib/server/rateLimit";
 import {
   incidentReportSchema,
@@ -110,9 +110,12 @@ export async function lookupIncidentTrackingAction(input: {
 /**
  * Fetch incident reports (admin only).
  */
-export async function getIncidentReportsAction(status?: IncidentStatus) {
+export async function getIncidentReportsAction(
+  status?: IncidentStatus,
+  channel?: SubmissionChannel
+) {
   await requireAuth();
-  return listIncidentReports(status);
+  return listIncidentReports(status, channel);
 }
 
 export async function getIncidentReportByIdAction(id: string) {

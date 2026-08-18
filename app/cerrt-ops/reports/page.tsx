@@ -1,12 +1,22 @@
 "use client";
 
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon, CheckmarkCircle02Icon, Clock01Icon } from "@hugeicons/core-free-icons";
-import type { IncidentReport, IncidentStatus } from "@prisma/client";
+import {
+  Alert02Icon,
+  CheckmarkCircle02Icon,
+  Clock01Icon,
+} from "@hugeicons/core-free-icons";
+import type {
+  IncidentReport,
+  IncidentStatus,
+  SubmissionChannel,
+} from "@prisma/client";
 import {
   getIncidentReportsAction,
   getIncidentStatsAction,
@@ -16,6 +26,9 @@ export default function ReportsPage() {
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | undefined>(
     undefined,
   );
+  const [channelFilter, setChannelFilter] = useState<
+    SubmissionChannel | undefined
+  >(undefined);
   const [reports, setReports] = useState<IncidentReport[] | null>(null);
   const [stats, setStats] = useState<{
     total: number;
@@ -26,13 +39,13 @@ export default function ReportsPage() {
   } | null>(null);
 
   const loadData = useCallback(() => {
-    getIncidentReportsAction(statusFilter)
+    getIncidentReportsAction(statusFilter, channelFilter)
       .then(setReports)
       .catch(() => setReports([]));
     getIncidentStatsAction()
       .then(setStats)
       .catch(() => {});
-  }, [statusFilter]);
+  }, [statusFilter, channelFilter]);
 
   useEffect(() => {
     loadData();
@@ -40,7 +53,7 @@ export default function ReportsPage() {
 
   const statusCounts = [
     {
-      label: "All",
+      label: "All Statuses",
       value: undefined,
       count: stats?.total || 0,
       icon: Alert02Icon,
@@ -81,15 +94,77 @@ export default function ReportsPage() {
     },
   ];
 
+  const channelOptions: {
+    label: string;
+    value: SubmissionChannel | undefined;
+  }[] = [
+    { label: "All Channels", value: undefined },
+    { label: "Web Form", value: "web" },
+    { label: "Email Box", value: "email" },
+    { label: "API Sync", value: "api" },
+  ];
+
+  function getChannelBadge(channel: SubmissionChannel) {
+    switch (channel) {
+      case "email":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-purple-50 text-purple-700 border-purple-200"
+          >
+            Email
+          </Badge>
+        );
+      case "api":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-50 text-blue-700 border-blue-200"
+          >
+            API
+          </Badge>
+        );
+      default:
+        return (
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200"
+          >
+            Web
+          </Badge>
+        );
+    }
+  }
+
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 font-serif">
-          Incident Reports
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Review and respond to incident reports submitted by the public
-        </p>
+      <div className="mb-8 flex flex-col gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 font-serif">
+            Incident Reports
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Review and respond to incident reports submitted via website forms,
+            email, or API sync
+          </p>
+        </div>
+
+        {/* Channel Filter Selector */}
+        <div className="flex items-center gap-1.5 bg-gray-100 p-1.5 rounded-xl self-start border border-gray-200">
+          {channelOptions.map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => setChannelFilter(opt.value)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                channelFilter === opt.value
+                  ? "bg-white text-gray-900 shadow-xs"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -145,6 +220,9 @@ export default function ReportsPage() {
                   Subject / Title
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                  Channel
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
                   Category
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
@@ -174,6 +252,9 @@ export default function ReportsPage() {
                     >
                       {report.title || `Incident #${report.id.slice(-6)}`}
                     </Link>
+                  </td>
+                  <td className="px-6 py-4">
+                    {getChannelBadge(report.submissionChannel)}
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-medium text-gray-700">
