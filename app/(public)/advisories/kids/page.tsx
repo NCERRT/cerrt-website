@@ -24,8 +24,8 @@ export default function KidsAdvisoryPage() {
   );
 
   useEffect(() => {
-    getAdvisoriesAction("kids")
-      .then(setAdvisories)
+    getAdvisoriesAction({ category: "kids" })
+      .then((res) => setAdvisories(res.advisories))
       .catch(() => setAdvisories([]));
   }, []);
 

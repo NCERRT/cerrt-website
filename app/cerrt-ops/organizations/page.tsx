@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -16,104 +16,66 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import {
-  getMdaOrganizationsAction,
-  toggleMdaOrganizationActiveAction,
-} from "@/app/actions/mdaRegistration";
-
-interface MdaAccountItem {
-  id: string;
-  email: string;
-  contactName: string;
-  jobTitle: string;
-  phone: string | null;
-  isActive: boolean;
-}
-
-interface MdaOrganizationRecord {
-  id: string;
-  name: string;
-  acronym: string | null;
-  sector: string | null;
-  verifiedDomains: string[];
-  isActive: boolean;
-  createdAt: string | Date;
-  account: MdaAccountItem | null;
-  incidentReports: { id: string }[];
-}
+  useMdaOrganizationsQuery,
+  useToggleMdaOrgActive,
+} from "@/hooks/use-mda-registrations";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function MdaOrganizationsAdminPage() {
-  const [organizations, setOrganizations] = useState<MdaOrganizationRecord[] | null>(null);
+  const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const pageSize = 15;
 
-  // In-UI Confirmation Modal State (Zero browser alerts)
+  // In-UI Confirmation Modal State
   const [confirmTarget, setConfirmTarget] = useState<{
     id: string;
     name: string;
     action: "activate" | "deactivate";
   } | null>(null);
 
-  const loadData = useCallback(() => {
-    setLoading(true);
-    getMdaOrganizationsAction()
-      .then((res) => {
-        if (res.success && res.data) {
-          setOrganizations(res.data as unknown as MdaOrganizationRecord[]);
-        } else if (!res.success) {
-          setError(res.error);
-        }
-      })
-      .catch(() => setError("Failed to load MDA organizations."))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading, isError, error: queryError } = useMdaOrganizationsQuery({
+    page,
+    pageSize,
+    search: searchQuery,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const toggleActiveMutation = useToggleMdaOrgActive();
 
-  const handleConfirmToggleActive = async () => {
+  const organizations = data?.organizations ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(1);
+  };
+
+  const handleConfirmToggleActive = () => {
     if (!confirmTarget) return;
 
-    setTogglingId(confirmTarget.id);
     setError("");
     setSuccessMsg("");
 
-    try {
-      const res = await toggleMdaOrganizationActiveAction(confirmTarget.id);
-      if (res.success) {
-        setSuccessMsg(
-          `Organization ${confirmTarget.name} ${
-            confirmTarget.action === "activate" ? "activated" : "deactivated"
-          } successfully.`,
-        );
-        setConfirmTarget(null);
-        loadData();
-      } else {
-        setError(res.error);
-      }
-    } catch {
-      setError("Failed to update organization status.");
-    } finally {
-      setTogglingId(null);
-    }
+    toggleActiveMutation.mutate(confirmTarget.id, {
+      onSuccess: (res) => {
+        if (res.success) {
+          setSuccessMsg(
+            `Organization ${confirmTarget.name} ${
+              confirmTarget.action === "activate" ? "activated" : "deactivated"
+            } successfully.`,
+          );
+          setConfirmTarget(null);
+        } else {
+          setError(res.error);
+        }
+      },
+      onError: (err) => {
+        setError((err as Error).message || "Failed to update organization status.");
+      },
+    });
   };
-
-  const filteredOrgs = organizations?.filter((org) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    const primaryAccount = org.account;
-    return (
-      org.name.toLowerCase().includes(q) ||
-      (org.acronym && org.acronym.toLowerCase().includes(q)) ||
-      (org.sector && org.sector.toLowerCase().includes(q)) ||
-      org.verifiedDomains.some((d) => d.toLowerCase().includes(q)) ||
-      (primaryAccount && primaryAccount.contactName.toLowerCase().includes(q)) ||
-      (primaryAccount && primaryAccount.email.toLowerCase().includes(q))
-    );
-  });
 
   return (
     <div className="space-y-6">
@@ -130,9 +92,9 @@ export default function MdaOrganizationsAdminPage() {
         </div>
       </div>
 
-      {error && (
+      {(error || isError) && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium flex items-center justify-between">
-          <span>{error}</span>
+          <span>{error || (queryError as Error)?.message}</span>
           <button onClick={() => setError("")} className="text-red-400 hover:text-red-600">
             <HugeiconsIcon icon={Cancel01Icon} size={16} />
           </button>
@@ -158,7 +120,7 @@ export default function MdaOrganizationsAdminPage() {
             type="text"
             placeholder="Search by agency, domain, or officer..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 shadow-xs"
           />
         </div>
@@ -166,12 +128,12 @@ export default function MdaOrganizationsAdminPage() {
 
       {/* Organizations Table */}
       <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
-        {loading ? (
+        {isLoading ? (
           <div className="p-12 text-center text-slate-500 text-sm">
             <div className="w-6 h-6 border-2 border-slate-800 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             Loading MDA organizations...
           </div>
-        ) : !filteredOrgs || filteredOrgs.length === 0 ? (
+        ) : organizations.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-sm">
             <HugeiconsIcon icon={Building01Icon} size={32} className="mx-auto mb-3 text-slate-400" />
             No MDA organizations found matching search criteria.
@@ -202,9 +164,13 @@ export default function MdaOrganizationsAdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {filteredOrgs.map((org) => {
+                {organizations.map((org) => {
                   const primaryAccount = org.account;
-                  const buttonLabel = togglingId === org.id ? "Updating..." : org.isActive ? "Deactivate" : "Activate";
+                  const buttonLabel = toggleActiveMutation.isPending && confirmTarget?.id === org.id
+                    ? "Updating..."
+                    : org.isActive
+                    ? "Deactivate"
+                    : "Activate";
 
                   return (
                     <tr key={org.id} className="hover:bg-slate-50/80 transition-colors">
@@ -266,7 +232,7 @@ export default function MdaOrganizationsAdminPage() {
                       <td className="px-6 py-4 font-mono font-bold text-slate-900 text-xs">
                         <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200">
                           <HugeiconsIcon icon={Alert02Icon} size={14} className="text-primary" />
-                          <span>{org.incidentReports.length} Cases</span>
+                          <span>{org.incidentReports?.length ?? 0} Cases</span>
                         </div>
                       </td>
 
@@ -288,7 +254,7 @@ export default function MdaOrganizationsAdminPage() {
                         <Button
                           size="sm"
                           variant={org.isActive ? "outline" : "default"}
-                          disabled={togglingId === org.id}
+                          disabled={toggleActiveMutation.isPending}
                           onClick={() =>
                             setConfirmTarget({
                               id: org.id,
@@ -312,9 +278,18 @@ export default function MdaOrganizationsAdminPage() {
             </table>
           </div>
         )}
+
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="organizations"
+        />
       </div>
 
-      {/* Custom Confirmation Modal (Replaces browser confirm) */}
+      {/* Custom Confirmation Modal */}
       {confirmTarget && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -349,7 +324,7 @@ export default function MdaOrganizationsAdminPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setConfirmTarget(null)}
-                disabled={togglingId === confirmTarget.id}
+                disabled={toggleActiveMutation.isPending}
                 className="text-xs rounded-xl"
               >
                 Cancel
@@ -357,7 +332,7 @@ export default function MdaOrganizationsAdminPage() {
 
               <Button
                 type="button"
-                disabled={togglingId === confirmTarget.id}
+                disabled={toggleActiveMutation.isPending}
                 onClick={handleConfirmToggleActive}
                 className={`text-xs font-semibold rounded-xl ${
                   confirmTarget.action === "deactivate"
@@ -365,7 +340,7 @@ export default function MdaOrganizationsAdminPage() {
                     : "bg-primary hover:bg-primary-light text-primary-foreground"
                 }`}
               >
-                {togglingId === confirmTarget.id
+                {toggleActiveMutation.isPending
                   ? "Updating..."
                   : confirmTarget.action === "deactivate"
                   ? "Confirm Deactivation"

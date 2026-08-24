@@ -49,13 +49,13 @@ export async function getMdaDashboardStatsAction(): Promise<
 }
 
 /**
- * Retrieves all incidents linked to the authenticated MDA organization.
+ * Retrieves all incidents linked to the authenticated MDA organization with pagination and search.
  */
-export async function getMdaIncidentsAction(): Promise<
-  ActionResult<Awaited<ReturnType<typeof getMdaIncidents>>>
-> {
+export async function getMdaIncidentsAction(
+  params: Parameters<typeof getMdaIncidents>[0] = {},
+): Promise<ActionResult<Awaited<ReturnType<typeof getMdaIncidents>>>> {
   try {
-    const data = await getMdaIncidents();
+    const data = await getMdaIncidents(params);
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to load MDA incidents.";

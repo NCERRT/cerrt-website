@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -15,46 +14,14 @@ import {
   UserIcon,
 } from "@hugeicons/core-free-icons";
 
-import { getMdaSessionAction } from "@/app/actions/mdaAuth";
-import { getMdaDashboardStatsAction } from "@/app/actions/mdaPortal";
-import type { AuthenticatedMdaUser } from "@/lib/server/mdaAuth";
-
-interface IncidentItem {
-  id: string;
-  title: string | null;
-  type: string;
-  severity: string;
-  status: string;
-  submittedAt: string | Date;
-  thehiveCaseId: string | null;
-}
+import { useMdaSessionQuery } from "@/hooks/use-mda-session";
+import { useMdaDashboardStatsQuery } from "@/hooks/use-mda-incidents";
 
 export default function MdaDashboardPage() {
-  const [user, setUser] = useState<AuthenticatedMdaUser | null>(null);
-  const [stats, setStats] = useState<{
-    total: number;
-    newCount: number;
-    reviewingCount: number;
-    resolvedCount: number;
-    recentIncidents: IncidentItem[];
-  } | null>(null);
+  const { data: user = null } = useMdaSessionQuery();
+  const { data: stats = null, isLoading: loading, isError, error: statsError } = useMdaDashboardStatsQuery();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    Promise.all([getMdaSessionAction(), getMdaDashboardStatsAction()])
-      .then(([session, statsRes]) => {
-        if (session) setUser(session);
-        if (statsRes.success && statsRes.data) {
-          setStats(statsRes.data as unknown as typeof stats);
-        } else if (!statsRes.success) {
-          setError(statsRes.error);
-        }
-      })
-      .catch(() => setError("Failed to load dashboard data."))
-      .finally(() => setLoading(false));
-  }, []);
+  const error = isError ? (statsError as Error)?.message : "";
 
   return (
     <div className="space-y-8">
@@ -173,7 +140,7 @@ export default function MdaDashboardPage() {
             <div>
               <span className="text-gray-500 block mb-1">Verified Domain:</span>
               <span className="font-mono text-gray-900 font-bold bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200 inline-block">
-                @{user?.verifiedDomains[0] || "gov.ng"}
+                @{user?.verifiedDomains?.[0] || "gov.ng"}
               </span>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -17,88 +17,73 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import {
-  approveMdaRegistrationAction,
-  getMdaRegistrationsAction,
-  rejectMdaRegistrationAction,
-} from "@/app/actions/mdaRegistration";
-
-interface MdaRegistrationRecord {
-  id: string;
-  organizationName: string;
-  acronym: string | null;
-  sector: string | null;
-  contactName: string;
-  contactEmail: string;
-  jobTitle: string;
-  phone: string | null;
-  emailDomain: string;
-  status: "pending" | "approved" | "rejected";
-  reviewNote: string | null;
-  reviewedAt: string | Date | null;
-  createdAt: string | Date;
-}
+  useMdaRegistrationsQuery,
+  useApproveMdaRegistration,
+  useRejectMdaRegistration,
+} from "@/hooks/use-mda-registrations";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function MdaRegistrationsAdminPage() {
-  const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected" | "all">("pending");
-  const [registrations, setRegistrations] = useState<MdaRegistrationRecord[] | null>(null);
+  const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected" | "ALL">("pending");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
+  const pageSize = 15;
 
-  // Approval Modal State (Zero browser alerts)
+  // Approval Modal State
   const [approvingTarget, setApprovingTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Rejection Modal State
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const loadData = useCallback(() => {
-    setLoading(true);
-    const filter = activeTab === "all" ? undefined : activeTab;
+  const { data, isLoading, isError, error } = useMdaRegistrationsQuery({
+    page,
+    pageSize,
+    search: searchQuery,
+    statusFilter: activeTab,
+  });
 
-    getMdaRegistrationsAction(filter)
-      .then((res) => {
-        if (res.success && res.data) {
-          setRegistrations(res.data as MdaRegistrationRecord[]);
-        } else {
-          setRegistrations([]);
-          if (!res.success) setActionError(res.error);
-        }
-      })
-      .catch(() => setRegistrations([]))
-      .finally(() => setLoading(false));
-  }, [activeTab]);
+  const approveMutation = useApproveMdaRegistration();
+  const rejectMutation = useRejectMdaRegistration();
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const registrations = data?.registrations ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  const handleConfirmApprove = async () => {
+  const handleTabChange = (tab: "pending" | "approved" | "rejected" | "ALL") => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(1);
+  };
+
+  const handleConfirmApprove = () => {
     if (!approvingTarget) return;
 
-    setIsProcessing(true);
     setActionError("");
     setActionSuccess("");
 
-    try {
-      const res = await approveMdaRegistrationAction(approvingTarget.id);
-      if (res.success) {
-        setActionSuccess(res.message || "Registration approved successfully.");
-        setApprovingTarget(null);
-        loadData();
-      } else {
-        setActionError(res.error);
-      }
-    } catch {
-      setActionError("Failed to approve registration.");
-    } finally {
-      setIsProcessing(false);
-    }
+    approveMutation.mutate(approvingTarget.id, {
+      onSuccess: (res) => {
+        if (res.success) {
+          setActionSuccess(res.message || "Registration approved successfully.");
+          setApprovingTarget(null);
+        } else {
+          setActionError(res.error);
+        }
+      },
+      onError: (err) => {
+        setActionError((err as Error).message || "Failed to approve registration.");
+      },
+    });
   };
 
-  const handleConfirmReject = async (e: React.FormEvent) => {
+  const handleConfirmReject = (e: React.FormEvent) => {
     e.preventDefault();
     if (!rejectingId) return;
 
@@ -107,71 +92,50 @@ export default function MdaRegistrationsAdminPage() {
       return;
     }
 
-    setIsProcessing(true);
     setActionError("");
     setActionSuccess("");
 
-    try {
-      const res = await rejectMdaRegistrationAction(rejectingId, rejectReason);
-      if (res.success) {
-        setActionSuccess(res.message || "Registration rejected.");
-        setRejectingId(null);
-        setRejectReason("");
-        loadData();
-      } else {
-        setActionError(res.error);
-      }
-    } catch {
-      setActionError("Failed to reject registration.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const filteredRegistrations = registrations?.filter((r) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      r.organizationName.toLowerCase().includes(q) ||
-      (r.acronym && r.acronym.toLowerCase().includes(q)) ||
-      r.contactName.toLowerCase().includes(q) ||
-      r.contactEmail.toLowerCase().includes(q) ||
-      r.emailDomain.toLowerCase().includes(q)
+    rejectMutation.mutate(
+      { registrationId: rejectingId, reason: rejectReason },
+      {
+        onSuccess: (res) => {
+          if (res.success) {
+            setActionSuccess(res.message || "Registration rejected.");
+            setRejectingId(null);
+            setRejectReason("");
+          } else {
+            setActionError(res.error);
+          }
+        },
+        onError: (err) => {
+          setActionError((err as Error).message || "Failed to reject registration.");
+        },
+      },
     );
-  });
-
-  const counts = {
-    pending: registrations?.filter((r) => r.status === "pending").length ?? 0,
-    approved: registrations?.filter((r) => r.status === "approved").length ?? 0,
-    rejected: registrations?.filter((r) => r.status === "rejected").length ?? 0,
   };
 
   const statusCards = [
     {
       label: "Pending Review",
       tab: "pending" as const,
-      count: counts.pending,
       icon: Clock01Icon,
       iconColor: "text-amber-600 bg-amber-50 border border-amber-200/80",
     },
     {
       label: "Approved",
       tab: "approved" as const,
-      count: counts.approved,
       icon: CheckmarkCircle02Icon,
       iconColor: "text-primary bg-primary/10 border border-primary/20",
     },
     {
       label: "Rejected",
       tab: "rejected" as const,
-      count: counts.rejected,
       icon: Cancel01Icon,
       iconColor: "text-red-600 bg-red-50 border border-red-200/80",
     },
     {
       label: "All Applications",
-      tab: "all" as const,
-      count: registrations?.length ?? 0,
+      tab: "ALL" as const,
       icon: Building02Icon,
       iconColor: "text-slate-700 bg-slate-100 border border-slate-200",
     },
@@ -192,11 +156,11 @@ export default function MdaRegistrationsAdminPage() {
       </div>
 
       {/* Action Messages */}
-      {actionError && (
+      {(actionError || isError) && (
         <div className="bg-red-50 border border-red-200/80 rounded-2xl p-4 flex items-center justify-between text-red-700 text-sm">
           <div className="flex items-center space-x-2">
             <HugeiconsIcon icon={Alert02Icon} size={18} className="text-red-600" />
-            <span>{actionError}</span>
+            <span>{actionError || (error as Error)?.message}</span>
           </div>
           <button onClick={() => setActionError("")} className="text-red-400 hover:text-red-600">
             <HugeiconsIcon icon={Cancel01Icon} size={16} />
@@ -216,7 +180,7 @@ export default function MdaRegistrationsAdminPage() {
         </div>
       )}
 
-      {/* Clean Status Cards */}
+      {/* Status Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {statusCards.map((card) => {
           const Icon = card.icon;
@@ -225,7 +189,7 @@ export default function MdaRegistrationsAdminPage() {
           return (
             <button
               key={card.tab}
-              onClick={() => setActiveTab(card.tab)}
+              onClick={() => handleTabChange(card.tab)}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer bg-white border ${
                 isSelected
                   ? "border-2 border-slate-900 ring-2 ring-slate-900/5 bg-slate-50/50 shadow-sm"
@@ -236,9 +200,6 @@ export default function MdaRegistrationsAdminPage() {
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${card.iconColor}`}>
                   <HugeiconsIcon icon={Icon} size={18} />
                 </div>
-                <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  {card.count}
-                </span>
               </div>
               <div className="text-xs font-semibold text-slate-700">
                 {card.label}
@@ -258,20 +219,20 @@ export default function MdaRegistrationsAdminPage() {
             type="text"
             placeholder="Search by agency, contact, or domain..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 shadow-xs"
           />
         </div>
       </div>
 
-      {/* Polished Registrations Table */}
+      {/* Registrations Table */}
       <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
-        {loading ? (
+        {isLoading ? (
           <div className="p-12 text-center text-slate-500 text-sm">
             <div className="w-6 h-6 border-2 border-slate-800 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             Loading MDA registrations...
           </div>
-        ) : !filteredRegistrations || filteredRegistrations.length === 0 ? (
+        ) : registrations.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-sm">
             <HugeiconsIcon icon={Building01Icon} size={32} className="mx-auto mb-3 text-slate-400" />
             No MDA registrations found matching criteria.
@@ -302,7 +263,7 @@ export default function MdaRegistrationsAdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {filteredRegistrations.map((r) => {
+                {registrations.map((r) => {
                   const isOfficialDomain =
                     r.emailDomain.endsWith(".gov.ng") ||
                     r.emailDomain.endsWith(".mil.ng") ||
@@ -402,7 +363,7 @@ export default function MdaRegistrationsAdminPage() {
                           <>
                             <Button
                               size="sm"
-                              disabled={isProcessing}
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
                               onClick={() => setApprovingTarget({ id: r.id, name: r.organizationName })}
                               className="bg-primary hover:bg-primary-light text-primary-foreground text-xs font-semibold h-8 rounded-lg"
                             >
@@ -412,7 +373,7 @@ export default function MdaRegistrationsAdminPage() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              disabled={isProcessing}
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
                               onClick={() => {
                                 setRejectingId(r.id);
                                 setRejectReason("");
@@ -433,9 +394,18 @@ export default function MdaRegistrationsAdminPage() {
             </table>
           </div>
         )}
+
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="applications"
+        />
       </div>
 
-      {/* Approval Confirmation Modal (Replaces browser confirm) */}
+      {/* Approval Confirmation Modal */}
       {approvingTarget && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -453,18 +423,18 @@ export default function MdaRegistrationsAdminPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setApprovingTarget(null)}
-                disabled={isProcessing}
+                disabled={approveMutation.isPending}
                 className="text-xs rounded-xl"
               >
                 Cancel
               </Button>
               <Button
                 type="button"
-                disabled={isProcessing}
+                disabled={approveMutation.isPending}
                 onClick={handleConfirmApprove}
                 className="text-xs bg-primary hover:bg-primary-light text-primary-foreground font-semibold rounded-xl"
               >
-                {isProcessing ? "Approving..." : "Confirm Approval"}
+                {approveMutation.isPending ? "Approving..." : "Confirm Approval"}
               </Button>
             </div>
           </div>
@@ -503,7 +473,7 @@ export default function MdaRegistrationsAdminPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setRejectingId(null)}
-                  disabled={isProcessing}
+                  disabled={rejectMutation.isPending}
                   className="text-xs rounded-xl"
                 >
                   Cancel
@@ -511,10 +481,10 @@ export default function MdaRegistrationsAdminPage() {
                 <Button
                   type="submit"
                   variant="destructive"
-                  disabled={isProcessing || rejectReason.trim().length < 5}
+                  disabled={rejectMutation.isPending || rejectReason.trim().length < 5}
                   className="text-xs bg-red-600 hover:bg-red-700 font-semibold rounded-xl"
                 >
-                  {isProcessing ? "Rejecting..." : "Confirm Rejection"}
+                  {rejectMutation.isPending ? "Rejecting..." : "Confirm Rejection"}
                 </Button>
               </div>
             </form>

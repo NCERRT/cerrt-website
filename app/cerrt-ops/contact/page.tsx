@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Table,
@@ -12,6 +12,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 import {
   Dialog,
   DialogContent,
@@ -25,43 +28,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  getContactSubmissionsAction,
-  updateContactStatusAction,
-} from "@/app/actions/contactSubmissions";
 import type { ContactSubmission, ContactStatus } from "@prisma/client";
+import { useContactSubmissionsQuery, useUpdateContactStatus } from "@/hooks/use-contact";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function ContactSubmissionsPage() {
-  const [submissions, setSubmissions] = useState<ContactSubmission[] | null>(
-    null,
-  );
-  const [selectedSubmission, setSelectedSubmission] =
-    useState<ContactSubmission | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const pageSize = 15;
 
-  const loadData = useCallback(() => {
-    getContactSubmissionsAction(
-      (filterStatus === "ALL" ? undefined : filterStatus) as
-        | ContactStatus
-        | undefined,
-    )
-      .then(setSubmissions)
-      .catch(() => setSubmissions([]));
-  }, [filterStatus]);
+  const currentStatusParam = (filterStatus === "ALL" ? undefined : filterStatus) as ContactStatus | undefined;
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data, isLoading, isError, error } = useContactSubmissionsQuery({
+    page,
+    pageSize,
+    search,
+    status: currentStatusParam,
+  });
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    try {
-      await updateContactStatusAction(id, newStatus);
-      toast.success("Status updated successfully");
-      loadData();
-    } catch (err) {
-      toast.error((err as Error).message || "Failed to update status");
-    }
+  const updateStatusMutation = useUpdateContactStatus();
+
+  const submissions = data?.submissions ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handleFilterStatusChange = (val: string) => {
+    setFilterStatus(val);
+    setPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    updateStatusMutation.mutate(
+      { id, status: newStatus as ContactStatus },
+      {
+        onSuccess: () => {
+          toast.success("Status updated successfully");
+          if (selectedSubmission && selectedSubmission.id === id) {
+            setSelectedSubmission({
+              ...selectedSubmission,
+              status: newStatus as ContactStatus,
+            });
+          }
+        },
+        onError: (err) => {
+          toast.error((err as Error).message || "Failed to update status");
+        },
+      },
+    );
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -79,7 +100,7 @@ export default function ContactSubmissionsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 font-serif">
             Contact Submissions
@@ -90,7 +111,7 @@ export default function ContactSubmissionsPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <Select value={filterStatus} onValueChange={handleFilterStatusChange}>
             <SelectTrigger className="w-45">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -104,14 +125,33 @@ export default function ContactSubmissionsPage() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="relative max-w-md">
+          <Input
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search name, email, subject, or message..."
+            className="pl-10 text-xs"
+          />
+          <div className="absolute left-3 top-3 text-gray-400">
+            <HugeiconsIcon icon={Search01Icon} size={16} />
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {submissions === null ? (
+        {isLoading ? (
           <div className="p-8 text-center text-gray-500">
-            Loading submissions...
+            Loading contact submissions...
+          </div>
+        ) : isError ? (
+          <div className="p-8 text-center text-red-600">
+            {(error as Error)?.message || "Failed to load submissions."}
           </div>
         ) : submissions.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            No contact submissions found.
+            No contact submissions found matching criteria.
           </div>
         ) : (
           <Table>
@@ -151,6 +191,7 @@ export default function ContactSubmissionsPage() {
                     <Select
                       value={sub.status}
                       onValueChange={(val) => handleStatusChange(sub.id, val)}
+                      disabled={updateStatusMutation.isPending}
                     >
                       <SelectTrigger className="w-32.5 h-8">
                         <SelectValue />
@@ -179,6 +220,15 @@ export default function ContactSubmissionsPage() {
             </TableBody>
           </Table>
         )}
+
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="submissions"
+        />
       </div>
 
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
@@ -268,11 +318,8 @@ export default function ContactSubmissionsPage() {
                     value={selectedSubmission.status}
                     onValueChange={(val) => {
                       handleStatusChange(selectedSubmission.id, val);
-                      setSelectedSubmission({
-                        ...selectedSubmission,
-                        status: val as ContactStatus,
-                      });
                     }}
+                    disabled={updateStatusMutation.isPending}
                   >
                     <SelectTrigger className="w-35">
                       <SelectValue />

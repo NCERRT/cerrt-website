@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FileScriptIcon,
@@ -12,33 +11,16 @@ import {
   Task01Icon,
   ChatUserIcon,
 } from "@hugeicons/core-free-icons";
-import { getAdvisoriesAction } from "@/app/actions/advisories";
-import { getIncidentStatsAction } from "@/app/actions/incidentReports";
+import { useAdvisoriesQuery } from "@/hooks/use-advisories";
+import { useIncidentStatsQuery } from "@/hooks/use-reports";
 import { useAuth } from "@/lib/useAuth";
-
-interface IncidentStats {
-  total: number;
-  new: number;
-  reviewing: number;
-  resolved: number;
-  closed: number;
-}
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [advisoryCount, setAdvisoryCount] = useState(0);
-  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(
-    null,
-  );
+  const { data: advisoriesData } = useAdvisoriesQuery({ page: 1, pageSize: 1 });
+  const { data: incidentStats } = useIncidentStatsQuery();
 
-  useEffect(() => {
-    getAdvisoriesAction()
-      .then((a) => setAdvisoryCount(a.length))
-      .catch(() => {});
-    getIncidentStatsAction()
-      .then(setIncidentStats)
-      .catch(() => {});
-  }, []);
+  const advisoryCount = advisoriesData?.totalCount ?? 0;
 
   const stats = [
     {

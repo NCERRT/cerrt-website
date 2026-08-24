@@ -265,10 +265,14 @@ export interface PersonalIncidentDetail {
 /**
  * Fetch all incidents submitted by the authenticated reporter.
  */
-export async function getPersonalIncidentsAction(): Promise<{
+export async function getPersonalIncidentsAction(params: {
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<{
   success: boolean;
   verifiedEmail?: string;
   incidents?: PersonalIncidentSummary[];
+  totalCount?: number;
   error?: string;
 }> {
   try {
@@ -277,26 +281,42 @@ export async function getPersonalIncidentsAction(): Promise<{
       return { success: false, error: "Unauthorized. Please verify your email first." };
     }
 
-    const incidents = await prisma.incidentReport.findMany({
-      where: {
-        contactEmail: { equals: verifiedEmail, mode: "insensitive" },
-      },
-      orderBy: { submittedAt: "desc" },
-      select: {
-        id: true,
-        ticketId: true,
-        thehiveCaseId: true,
-        title: true,
-        type: true,
-        status: true,
-        hiveStatus: true,
-        severity: true,
-        submittedAt: true,
-        updatedAt: true,
-      },
-    });
+    const page = params.page || 1;
+    const pageSize = params.pageSize || 15;
+    const skip = (page - 1) * pageSize;
 
-    return { success: true, verifiedEmail, incidents: incidents as PersonalIncidentSummary[] };
+    const where = {
+      contactEmail: { equals: verifiedEmail, mode: "insensitive" as const },
+    };
+
+    const [incidents, totalCount] = await Promise.all([
+      prisma.incidentReport.findMany({
+        where,
+        orderBy: { submittedAt: "desc" },
+        skip,
+        take: pageSize,
+        select: {
+          id: true,
+          ticketId: true,
+          thehiveCaseId: true,
+          title: true,
+          type: true,
+          status: true,
+          hiveStatus: true,
+          severity: true,
+          submittedAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.incidentReport.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      verifiedEmail,
+      incidents: incidents as PersonalIncidentSummary[],
+      totalCount,
+    };
   } catch (err) {
     console.error("[PersonalAccess] Error fetching personal incidents:", err);
     return { success: false, error: (err as Error).message || "Failed to load incidents." };

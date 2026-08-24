@@ -6,11 +6,46 @@ import type { ContactStatus, InquiryType } from "@prisma/client";
  * Data-access layer for contact form submissions.
  */
 
-export function listContactSubmissions(status?: ContactStatus) {
-  return prisma.contactSubmission.findMany({
-    where: status ? { status } : undefined,
-    orderBy: { submittedAt: "desc" },
-  });
+export interface ListContactSubmissionsParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: ContactStatus;
+}
+
+export async function listContactSubmissions(params: ListContactSubmissionsParams = {}) {
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 15;
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+
+  if (params.status) {
+    where.status = params.status;
+  }
+
+  if (params.search && params.search.trim()) {
+    const q = params.search.trim();
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { email: { contains: q, mode: "insensitive" } },
+      { subject: { contains: q, mode: "insensitive" } },
+      { message: { contains: q, mode: "insensitive" } },
+      { organization: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  const [submissions, totalCount] = await Promise.all([
+    prisma.contactSubmission.findMany({
+      where,
+      orderBy: { submittedAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.contactSubmission.count({ where }),
+  ]);
+
+  return { submissions, totalCount };
 }
 
 export function getContactSubmissionById(id: string) {

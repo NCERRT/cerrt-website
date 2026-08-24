@@ -37,7 +37,7 @@ export default function Home() {
       });
     // Fetch the 3 most recent advisories
     getAdvisoriesAction()
-      .then((list) => setRecentAdvisories(list.slice(0, 3)))
+      .then((res) => setRecentAdvisories(res.advisories.slice(0, 3)))
       .catch(() => {});
   }, []);
   const resources = [

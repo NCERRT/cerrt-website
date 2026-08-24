@@ -15,7 +15,7 @@ export default function AdvisoriesPage() {
 
   useEffect(() => {
     getAdvisoriesAction()
-      .then(setAdvisories)
+      .then((res) => setAdvisories(res.advisories))
       .catch(() => setAdvisories([]));
   }, []);
 

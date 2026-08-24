@@ -1,31 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
-import type { Subscriber } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Download01Icon, Delete01Icon, MailAtSign02Icon } from "@hugeicons/core-free-icons";
-import {
-  getSubscribersAction,
-  deleteSubscriberAction,
-  exportSubscribersCsvAction,
-} from "@/app/actions/subscribers";
+import { Download01Icon, Delete01Icon, MailAtSign02Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { exportSubscribersCsvAction } from "@/app/actions/subscribers";
+import { useSubscribersQuery, useDeleteSubscriber } from "@/hooks/use-subscribers";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function SubscribersPage() {
-  const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const [exporting, setExporting] = useState(false);
+  const pageSize = 15;
 
-  const loadData = useCallback(() => {
-    getSubscribersAction()
-      .then(setSubscribers)
-      .catch(() => setSubscribers([]));
-  }, []);
+  const { data, isLoading, isError, error } = useSubscribersQuery({
+    page,
+    pageSize,
+    search,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const subscribers = data?.subscribers ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -70,11 +75,7 @@ export default function SubscribersPage() {
         </div>
         <Button
           onClick={handleExport}
-          disabled={
-            exporting ||
-            subscribers === null ||
-            subscribers.length === 0
-          }
+          disabled={exporting || totalCount === 0}
           className="flex items-center gap-2"
         >
           <HugeiconsIcon
@@ -99,15 +100,30 @@ export default function SubscribersPage() {
           </div>
           <div>
             <div className="text-3xl font-bold text-gray-900">
-              {subscribers?.length ?? "—"}
+              {totalCount.toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Total subscribers</div>
           </div>
         </div>
       </div>
 
+      {/* Search Input */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="relative max-w-md">
+          <Input
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search email address..."
+            className="pl-10 text-xs"
+          />
+          <div className="absolute left-3 top-3 text-gray-400">
+            <HugeiconsIcon icon={Search01Icon} size={16} />
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
-      <div className="bg-white rounded-xl border-2 border-gray-200">
+      <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
@@ -124,16 +140,22 @@ export default function SubscribersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {subscribers === null ? (
+              {isLoading ? (
                 <tr>
                   <td colSpan={3} className="px-6 py-8 text-center text-gray-500 text-sm">
-                    Loading...
+                    Loading subscribers...
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-red-600 text-sm">
+                    {(error as Error)?.message || "Failed to load subscribers."}
                   </td>
                 </tr>
               ) : subscribers.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-6 py-12 text-center text-gray-500 text-sm">
-                    No subscribers yet.
+                    No subscribers found matching criteria.
                   </td>
                 </tr>
               ) : (
@@ -146,7 +168,7 @@ export default function SubscribersPage() {
                       {formatDate(sub.subscribedAt)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <DeleteSubscriberButton id={sub.id} email={sub.email} onDeleted={loadData} />
+                      <DeleteSubscriberButton id={sub.id} email={sub.email} />
                     </td>
                   </tr>
                 ))
@@ -154,6 +176,15 @@ export default function SubscribersPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="subscribers"
+        />
       </div>
     </div>
   );
@@ -162,14 +193,12 @@ export default function SubscribersPage() {
 function DeleteSubscriberButton({
   id,
   email,
-  onDeleted,
 }: {
   id: string;
   email: string;
-  onDeleted: () => void;
 }) {
-  const [deleting, setDeleting] = useState(false);
   const confirm = useConfirm();
+  const deleteMutation = useDeleteSubscriber();
 
   const handleDelete = async () => {
     const ok = await confirm({
@@ -180,16 +209,14 @@ function DeleteSubscriberButton({
     });
     if (!ok) return;
 
-    setDeleting(true);
-    try {
-      await deleteSubscriberAction(id);
-      toast.success("Subscriber removed");
-      onDeleted();
-    } catch (err) {
-      toast.error((err as Error).message || "Failed to remove subscriber");
-    } finally {
-      setDeleting(false);
-    }
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success("Subscriber removed");
+      },
+      onError: (err) => {
+        toast.error((err as Error).message || "Failed to remove subscriber");
+      },
+    });
   };
 
   return (
@@ -197,7 +224,7 @@ function DeleteSubscriberButton({
       variant="ghost"
       size="sm"
       onClick={handleDelete}
-      disabled={deleting}
+      disabled={deleteMutation.isPending}
       className="text-red-600 hover:text-red-700 hover:bg-red-50"
       aria-label={`Remove ${email}`}
     >

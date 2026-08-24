@@ -8,32 +8,55 @@ import type { AdvisoryCategory, Prisma } from "@prisma/client";
  * Write functions are called by Server Actions (which add auth + validation).
  */
 
-export function listAdvisories(category?: AdvisoryCategory) {
-  return prisma.advisory.findMany({
-    where: category ? { category } : undefined,
-    orderBy: { date: "desc" },
-    include: { posterItems: { orderBy: { order: 'asc' } } },
-  });
+export interface ListAdvisoriesParams {
+  page?: number;
+  pageSize?: number;
+  category?: AdvisoryCategory;
+}
+
+export async function listAdvisories(params: ListAdvisoriesParams = {}) {
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 12;
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+
+  if (params.category) {
+    where.category = params.category;
+  }
+
+  const [advisories, totalCount] = await Promise.all([
+    prisma.advisory.findMany({
+      where,
+      orderBy: { date: "desc" },
+      skip,
+      take: pageSize,
+      include: { posterItems: { orderBy: { order: "asc" } } },
+    }),
+    prisma.advisory.count({ where }),
+  ]);
+
+  return { advisories, totalCount };
 }
 
 export function getAdvisoryById(id: string) {
   return prisma.advisory.findUnique({
     where: { id },
-    include: { posterItems: { orderBy: { order: 'asc' } } },
+    include: { posterItems: { orderBy: { order: "asc" } } },
   });
 }
 
 export function getAdvisoryByAdvisoryId(advisoryId: string) {
   return prisma.advisory.findUnique({
     where: { advisoryId },
-    include: { posterItems: { orderBy: { order: 'asc' } } },
+    include: { posterItems: { orderBy: { order: "asc" } } },
   });
 }
 
 export function getAdvisoryBySlug(slug: string) {
   return prisma.advisory.findUnique({
     where: { slug },
-    include: { posterItems: { orderBy: { order: 'asc' } } },
+    include: { posterItems: { orderBy: { order: "asc" } } },
   });
 }
 

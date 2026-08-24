@@ -26,8 +26,8 @@ export default function OrganizationsAdvisoryPage() {
   );
 
   useEffect(() => {
-    getAdvisoriesAction("organizations")
-      .then(setAdvisories)
+    getAdvisoriesAction({ category: "organizations" })
+      .then((res) => setAdvisories(res.advisories))
       .catch(() => setAdvisories([]));
   }, []);
 

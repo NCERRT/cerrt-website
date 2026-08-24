@@ -1,55 +1,55 @@
 "use client";
 
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
   CheckmarkCircle02Icon,
   Clock01Icon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
-import type {
-  IncidentReport,
-  IncidentStatus,
-  SubmissionChannel,
-} from "@prisma/client";
-import {
-  getIncidentReportsAction,
-  getIncidentStatsAction,
-} from "@/app/actions/incidentReports";
+import type { IncidentStatus, SubmissionChannel } from "@prisma/client";
+import { useReportsQuery, useIncidentStatsQuery } from "@/hooks/use-reports";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function ReportsPage() {
-  const [statusFilter, setStatusFilter] = useState<IncidentStatus | undefined>(
-    undefined,
-  );
-  const [channelFilter, setChannelFilter] = useState<
-    SubmissionChannel | undefined
-  >(undefined);
-  const [reports, setReports] = useState<IncidentReport[] | null>(null);
-  const [stats, setStats] = useState<{
-    total: number;
-    new: number;
-    reviewing: number;
-    resolved: number;
-    closed: number;
-  } | null>(null);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<IncidentStatus | undefined>(undefined);
+  const [channelFilter, setChannelFilter] = useState<SubmissionChannel | undefined>(undefined);
+  const pageSize = 15;
 
-  const loadData = useCallback(() => {
-    getIncidentReportsAction(statusFilter, channelFilter)
-      .then(setReports)
-      .catch(() => setReports([]));
-    getIncidentStatsAction()
-      .then(setStats)
-      .catch(() => {});
-  }, [statusFilter, channelFilter]);
+  const { data: stats } = useIncidentStatsQuery();
+  const { data: reportsData, isLoading, isError, error } = useReportsQuery({
+    page,
+    pageSize,
+    search,
+    status: statusFilter,
+    channel: channelFilter,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const reports = reportsData?.reports ?? [];
+  const totalCount = reportsData?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handleStatusChange = (val: IncidentStatus | undefined) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
+
+  const handleChannelChange = (val: SubmissionChannel | undefined) => {
+    setChannelFilter(val);
+    setPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
 
   const statusCounts = [
     {
@@ -61,28 +61,28 @@ export default function ReportsPage() {
     },
     {
       label: "New",
-      value: "new",
+      value: "new" as IncidentStatus,
       count: stats?.new || 0,
       icon: Alert02Icon,
       iconColor: "text-red-600 bg-red-50 border border-red-200/80",
     },
     {
       label: "Reviewing",
-      value: "reviewing",
+      value: "reviewing" as IncidentStatus,
       count: stats?.reviewing || 0,
       icon: Clock01Icon,
       iconColor: "text-amber-600 bg-amber-50 border border-amber-200/80",
     },
     {
       label: "Resolved",
-      value: "resolved",
+      value: "resolved" as IncidentStatus,
       count: stats?.resolved || 0,
       icon: CheckmarkCircle02Icon,
       iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/80",
     },
     {
       label: "Closed",
-      value: "closed",
+      value: "closed" as IncidentStatus,
       count: stats?.closed || 0,
       icon: CheckmarkCircle02Icon,
       iconColor: "text-slate-500 bg-slate-50 border border-slate-200",
@@ -133,7 +133,7 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 font-serif">
             Incident Reports
@@ -145,12 +145,12 @@ export default function ReportsPage() {
         </div>
 
         {/* Channel Filter Selector */}
-        <div className="flex items-center gap-1.5 bg-gray-100 p-1.5 rounded-xl self-start border border-gray-200">
+        <div className="flex items-center gap-1.5 bg-gray-100 p-1.5 rounded-xl self-start md:self-auto border border-gray-200">
           {channelOptions.map((opt) => (
             <button
               key={opt.label}
-              onClick={() => setChannelFilter(opt.value)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              onClick={() => handleChannelChange(opt.value)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 channelFilter === opt.value
                   ? "bg-white text-gray-900 shadow-xs"
                   : "text-gray-600 hover:text-gray-900"
@@ -170,7 +170,7 @@ export default function ReportsPage() {
           return (
             <button
               key={filter.label}
-              onClick={() => setStatusFilter(filter.value as IncidentStatus)}
+              onClick={() => handleStatusChange(filter.value)}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer bg-white border ${
                 isSelected
                   ? "border-2 border-slate-900 ring-2 ring-slate-900/5 bg-slate-50/50 shadow-sm"
@@ -193,6 +193,21 @@ export default function ReportsPage() {
             </button>
           );
         })}
+      </div>
+
+      {/* Search Input */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="relative max-w-md">
+          <Input
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search report title, description, reporter, or SOC ID..."
+            className="pl-10 text-xs"
+          />
+          <div className="absolute left-3 top-3 text-gray-400">
+            <HugeiconsIcon icon={Search01Icon} size={16} />
+          </div>
+        </div>
       </div>
 
       {/* Table */}
@@ -228,83 +243,106 @@ export default function ReportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {reports?.map((report) => (
-                <tr key={report.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/cerrt-ops/reports/${report.id}`}
-                      className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors block max-w-xs truncate"
-                    >
-                      {report.title || `Incident #${report.id.slice(-6)}`}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getChannelBadge(report.submissionChannel)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-gray-700">
-                      {report.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 font-medium">
-                      {report.contactName || "Anonymous"}
-                    </div>
-                    {report.contactEmail && (
-                      <div className="text-xs text-gray-500">
-                        {report.contactEmail}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {report.severity ? (
-                      <Badge
-                        variant={
-                          report.severity === "critical"
-                            ? "destructive"
-                            : "default"
-                        }
-                      >
-                        {report.severity}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge
-                      variant={
-                        report.status === "new"
-                          ? "destructive"
-                          : report.status === "resolved"
-                            ? "default"
-                            : "outline"
-                      }
-                    >
-                      {report.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(report.submittedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={`/cerrt-ops/reports/${report.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
-                    </Link>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 text-sm">
+                    Loading incident reports...
                   </td>
                 </tr>
-              ))}
+              ) : isError ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-red-600 text-sm">
+                    {(error as Error)?.message || "Failed to load incident reports."}
+                  </td>
+                </tr>
+              ) : reports.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 text-sm">
+                    No reports found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                reports.map((report) => (
+                  <tr key={report.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/cerrt-ops/reports/${report.id}`}
+                        className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors block max-w-xs truncate"
+                      >
+                        {report.title || `Incident #${report.id.slice(-6)}`}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      {getChannelBadge(report.submissionChannel)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-gray-700">
+                        {report.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 font-medium">
+                        {report.contactName || "Anonymous"}
+                      </div>
+                      {report.contactEmail && (
+                        <div className="text-xs text-gray-500">
+                          {report.contactEmail}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {report.severity ? (
+                        <Badge
+                          variant={
+                            report.severity === "critical"
+                              ? "destructive"
+                              : "default"
+                          }
+                        >
+                          {report.severity}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge
+                        variant={
+                          report.status === "new"
+                            ? "destructive"
+                            : report.status === "resolved"
+                              ? "default"
+                              : "outline"
+                        }
+                      >
+                        {report.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(report.submittedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Link href={`/cerrt-ops/reports/${report.id}`}>
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        {reports?.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No reports found.</p>
-          </div>
-        )}
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="reports"
+        />
       </div>
     </div>
   );

@@ -5,8 +5,8 @@ import {
   createContactSubmission,
   updateContactStatus,
   listContactSubmissions,
+  type ListContactSubmissionsParams,
 } from "@/lib/server/contactSubmissions";
-import type { ContactStatus } from "@prisma/client";
 import { requireAuth } from "@/lib/server/auth";
 import { checkRateLimit } from "@/lib/server/rateLimit";
 import {
@@ -77,9 +77,9 @@ export async function updateContactStatusAction(
 }
 
 /**
- * Get all contact submissions (admin only).
+ * Get contact submissions with pagination and search (admin only).
  */
-export async function getContactSubmissionsAction(status?: ContactStatus) {
+export async function getContactSubmissionsAction(params: ListContactSubmissionsParams = {}) {
   await requireAuth();
-  return listContactSubmissions(status);
+  return listContactSubmissions(params);
 }

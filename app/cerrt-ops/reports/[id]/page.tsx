@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,12 +35,11 @@ import {
   Download01Icon,
   ViewIcon,
 } from "@hugeicons/core-free-icons";
-import type { IncidentReport, IncidentStatus } from "@prisma/client";
+import type { IncidentStatus } from "@prisma/client";
 import {
-  getIncidentReportByIdAction,
-  updateIncidentStatusAction,
-  getCaseCommunicationsAction,
-} from "@/app/actions/incidentReports";
+  useReportDetailQuery,
+  useUpdateReportStatus,
+} from "@/hooks/use-reports";
 import Image from "next/image";
 
 export default function IncidentReportDetailPage({
@@ -50,54 +48,29 @@ export default function IncidentReportDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
 
-  const [report, setReport] = useState<IncidentReport | null>(null);
-  const [communications, setCommunications] = useState<
-    Awaited<ReturnType<typeof getCaseCommunicationsAction>>
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [savingNotes, setSavingNotes] = useState(false);
+  const { data: detailData, isLoading: loading } = useReportDetailQuery(id);
+  const updateStatusMutation = useUpdateReportStatus();
+
+  const report = detailData?.report ?? null;
+  const communications = detailData?.communications ?? [];
 
   // Form state
+  const [prevReportId, setPrevReportId] = useState<string | null>(null);
   const [status, setStatus] = useState<IncidentStatus>("new");
-  const [pendingStatus, setPendingStatus] = useState<IncidentStatus | null>(
-    null,
-  );
+  const [pendingStatus, setPendingStatus] = useState<IncidentStatus | null>(null);
   const [notes, setNotes] = useState("");
   const [showOverrideModal, setShowOverrideModal] = useState(false);
-  const [savingStatus, setSavingStatus] = useState(false);
   const [activeLightbox, setActiveLightbox] = useState<{
     items: { url: string; name?: string | null }[];
     index: number;
   } | null>(null);
 
-  const loadReport = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [data, comms] = await Promise.all([
-        getIncidentReportByIdAction(id),
-        getCaseCommunicationsAction(id).catch(() => []),
-      ]);
-      if (!data) {
-        toast.error("Incident report not found");
-        router.push("/cerrt-ops/reports");
-        return;
-      }
-      setReport(data);
-      setCommunications(comms);
-      setStatus(data.status);
-      setNotes(data.notes || "");
-    } catch {
-      toast.error("Failed to load incident report");
-    } finally {
-      setLoading(false);
-    }
-  }, [id, router]);
-
-  useEffect(() => {
-    loadReport();
-  }, [loadReport]);
+  if (report && report.id !== prevReportId) {
+    setPrevReportId(report.id);
+    setStatus(report.status);
+    setNotes(report.notes || "");
+  }
 
   const handleStatusSelect = (newStatus: IncidentStatus) => {
     if (newStatus === status) return;
@@ -105,39 +78,37 @@ export default function IncidentReportDetailPage({
     setShowOverrideModal(true);
   };
 
-  const confirmStatusOverride = async () => {
+  const confirmStatusOverride = () => {
     if (!pendingStatus || !report) return;
-    setSavingStatus(true);
-    try {
-      await updateIncidentStatusAction(
-        report.id,
-        pendingStatus,
-        notes || undefined,
-      );
-      setStatus(pendingStatus);
-      toast.success(`Status manually updated to "${pendingStatus}"`);
-      setShowOverrideModal(false);
-      setPendingStatus(null);
-      loadReport();
-    } catch (error) {
-      toast.error((error as Error).message || "Failed to update status");
-    } finally {
-      setSavingStatus(false);
-    }
+    updateStatusMutation.mutate(
+      { id: report.id, status: pendingStatus, notes: notes || undefined },
+      {
+        onSuccess: () => {
+          setStatus(pendingStatus);
+          toast.success(`Status manually updated to "${pendingStatus}"`);
+          setShowOverrideModal(false);
+          setPendingStatus(null);
+        },
+        onError: (error) => {
+          toast.error((error as Error).message || "Failed to update status");
+        },
+      },
+    );
   };
 
-  const handleSaveNotes = async () => {
+  const handleSaveNotes = () => {
     if (!report) return;
-    setSavingNotes(true);
-    try {
-      await updateIncidentStatusAction(report.id, status, notes || undefined);
-      toast.success("Internal notes saved successfully");
-      loadReport();
-    } catch (error) {
-      toast.error((error as Error).message || "Failed to save notes");
-    } finally {
-      setSavingNotes(false);
-    }
+    updateStatusMutation.mutate(
+      { id: report.id, status, notes: notes || undefined },
+      {
+        onSuccess: () => {
+          toast.success("Internal notes saved successfully");
+        },
+        onError: (error) => {
+          toast.error((error as Error).message || "Failed to save notes");
+        },
+      },
+    );
   };
 
   if (loading) {
@@ -535,10 +506,10 @@ export default function IncidentReportDetailPage({
                 <span>{notes.length}/2000 chars</span>
                 <Button
                   onClick={handleSaveNotes}
-                  disabled={savingNotes}
+                  disabled={updateStatusMutation.isPending}
                   size="sm"
                 >
-                  {savingNotes ? "Saving..." : "Save Notes"}
+                  {updateStatusMutation.isPending ? "Saving..." : "Save Notes"}
                 </Button>
               </div>
             </div>
@@ -580,10 +551,10 @@ export default function IncidentReportDetailPage({
             </Button>
             <Button
               onClick={confirmStatusOverride}
-              disabled={savingStatus}
+              disabled={updateStatusMutation.isPending}
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
-              {savingStatus ? "Overriding..." : "Confirm Manual Override"}
+              {updateStatusMutation.isPending ? "Overriding..." : "Confirm Manual Override"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -156,11 +156,46 @@ export async function submitMdaRegistration(input: MdaRegistrationInput) {
   return registration;
 }
 
-export async function getMdaRegistrations(statusFilter?: "pending" | "approved" | "rejected") {
-  return prisma.mdaRegistration.findMany({
-    where: statusFilter ? { status: statusFilter } : undefined,
-    orderBy: { createdAt: "desc" },
-  });
+export interface GetMdaRegistrationsParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  statusFilter?: "pending" | "approved" | "rejected" | "ALL";
+}
+
+export async function getMdaRegistrations(params: GetMdaRegistrationsParams = {}) {
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 15;
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+
+  if (params.statusFilter && params.statusFilter !== "ALL") {
+    where.status = params.statusFilter;
+  }
+
+  if (params.search && params.search.trim()) {
+    const q = params.search.trim();
+    where.OR = [
+      { organizationName: { contains: q, mode: "insensitive" } },
+      { contactName: { contains: q, mode: "insensitive" } },
+      { contactEmail: { contains: q, mode: "insensitive" } },
+      { emailDomain: { contains: q, mode: "insensitive" } },
+      { acronym: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  const [registrations, totalCount] = await Promise.all([
+    prisma.mdaRegistration.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.mdaRegistration.count({ where }),
+  ]);
+
+  return { registrations, totalCount };
 }
 
 export async function getMdaRegistrationById(id: string) {
@@ -321,25 +356,57 @@ export async function rejectMdaRegistration(
 /**
  * Retrieves all registered MDA Organizations for Superadmin management.
  */
-export async function getMdaOrganizations() {
-  return prisma.mdaOrganization.findMany({
-    include: {
-      account: {
-        select: {
-          id: true,
-          email: true,
-          contactName: true,
-          jobTitle: true,
-          phone: true,
-          isActive: true,
+export interface GetMdaOrganizationsParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export async function getMdaOrganizations(params: GetMdaOrganizationsParams = {}) {
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 15;
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+
+  if (params.search && params.search.trim()) {
+    const q = params.search.trim();
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { acronym: { contains: q, mode: "insensitive" } },
+      { sector: { contains: q, mode: "insensitive" } },
+      { verifiedDomains: { has: q.toLowerCase() } },
+      { account: { is: { contactName: { contains: q, mode: "insensitive" } } } },
+      { account: { is: { email: { contains: q, mode: "insensitive" } } } },
+    ];
+  }
+
+  const [organizations, totalCount] = await Promise.all([
+    prisma.mdaOrganization.findMany({
+      where,
+      include: {
+        account: {
+          select: {
+            id: true,
+            email: true,
+            contactName: true,
+            jobTitle: true,
+            phone: true,
+            isActive: true,
+          },
+        },
+        incidentReports: {
+          select: { id: true },
         },
       },
-      incidentReports: {
-        select: { id: true },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.mdaOrganization.count({ where }),
+  ]);
+
+  return { organizations, totalCount };
 }
 
 /**

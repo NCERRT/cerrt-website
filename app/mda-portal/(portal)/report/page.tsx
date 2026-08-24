@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
@@ -11,7 +10,6 @@ import {
   Building02Icon,
   CheckmarkCircle02Icon,
   Shield01Icon,
-  UserIcon,
 } from "@hugeicons/core-free-icons";
 
 import { getMdaSessionAction } from "@/app/actions/mdaAuth";
@@ -38,7 +36,6 @@ const SEVERITIES = [
 ];
 
 export default function MdaReportIncidentPage() {
-  const router = useRouter();
   const [user, setUser] = useState<AuthenticatedMdaUser | null>(null);
 
   const [formData, setFormData] = useState({

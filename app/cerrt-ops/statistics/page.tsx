@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/button";
@@ -23,10 +23,10 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, Delete01Icon } from "@hugeicons/core-free-icons";
 import {
-  getDefacementStatsAction,
-  upsertStatAction,
-  deleteStatAction,
-} from "@/app/actions/defacementStats";
+  useDefacementStatsQuery,
+  useUpsertStat,
+  useDeleteStat,
+} from "@/hooks/use-statistics";
 
 const MONTHS = [
   "January",
@@ -43,31 +43,16 @@ const MONTHS = [
   "December",
 ];
 
-type StatsByYear = Record<
-  number,
-  { id: string; month: number; incidents: number }[]
->;
-
 export default function StatisticsPage() {
-  const [statsByYear, setStatsByYear] = useState<StatsByYear>({});
-  const [years, setYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear(),
   );
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const loadData = useCallback(() => {
-    getDefacementStatsAction()
-      .then(({ statsByYear, years }) => {
-        setStatsByYear(statsByYear);
-        setYears(years);
-      })
-      .catch(() => {});
-  }, []);
+  const { data, isLoading } = useDefacementStatsQuery();
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const statsByYear = data?.statsByYear ?? {};
+  const years = data?.years ?? [];
 
   // Build a complete 12-month dataset for the selected year
   const yearStats = statsByYear[selectedYear] || [];
@@ -106,7 +91,6 @@ export default function StatisticsPage() {
             <StatForm
               onSuccess={() => {
                 setIsAddOpen(false);
-                loadData();
               }}
             />
           </DialogContent>
@@ -142,25 +126,29 @@ export default function StatisticsPage() {
       </div>
 
       {/* Monthly Data Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {monthsData.map((data) => (
-          <div
-            key={data.month}
-            className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-bold text-gray-900">{data.monthName}</h3>
-              {data.id && (
-                <DeleteStatButton statId={data.id} onDeleted={loadData} />
-              )}
+      {isLoading ? (
+        <div className="p-12 text-center text-gray-500 text-sm">
+          Loading statistics...
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {monthsData.map((d) => (
+            <div
+              key={d.month}
+              className="bg-white rounded-xl border-2 border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-bold text-gray-900">{d.monthName}</h3>
+                {d.id && <DeleteStatButton statId={d.id} />}
+              </div>
+              <div className="text-4xl font-bold text-primary mb-2">
+                {d.incidents}
+              </div>
+              <div className="text-sm text-gray-600">incidents</div>
             </div>
-            <div className="text-4xl font-bold text-primary mb-2">
-              {data.incidents}
-            </div>
-            <div className="text-sm text-gray-600">incidents</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Summary */}
       <div className="bg-white rounded-xl border-2 border-gray-200 p-6 mt-6">
@@ -198,21 +186,23 @@ function StatForm({ onSuccess }: { onSuccess: () => void }) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [incidents, setIncidents] = useState(0);
-  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const upsertMutation = useUpsertStat();
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-
-    try {
-      await upsertStatAction(year, month, incidents);
-      toast.success("Statistic saved successfully");
-      onSuccess();
-    } catch (error) {
-      toast.error((error as Error).message || "Failed to save statistic");
-    } finally {
-      setSaving(false);
-    }
+    upsertMutation.mutate(
+      { year, month, incidents },
+      {
+        onSuccess: () => {
+          toast.success("Statistic saved successfully");
+          onSuccess();
+        },
+        onError: (err) => {
+          toast.error((err as Error).message || "Failed to save statistic");
+        },
+      },
+    );
   };
 
   return (
@@ -265,23 +255,17 @@ function StatForm({ onSuccess }: { onSuccess: () => void }) {
         <Button type="button" variant="outline" onClick={onSuccess}>
           Cancel
         </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : "Save"}
+        <Button type="submit" disabled={upsertMutation.isPending}>
+          {upsertMutation.isPending ? "Saving..." : "Save"}
         </Button>
       </div>
     </form>
   );
 }
 
-function DeleteStatButton({
-  statId,
-  onDeleted,
-}: {
-  statId: string;
-  onDeleted: () => void;
-}) {
-  const [deleting, setDeleting] = useState(false);
+function DeleteStatButton({ statId }: { statId: string }) {
   const confirm = useConfirm();
+  const deleteMutation = useDeleteStat();
 
   const handleDelete = async () => {
     const ok = await confirm({
@@ -292,16 +276,14 @@ function DeleteStatButton({
     });
     if (!ok) return;
 
-    setDeleting(true);
-    try {
-      await deleteStatAction(statId);
-      toast.success("Statistic deleted");
-      onDeleted();
-    } catch (error) {
-      toast.error((error as Error).message || "Failed to delete stat");
-    } finally {
-      setDeleting(false);
-    }
+    deleteMutation.mutate(statId, {
+      onSuccess: () => {
+        toast.success("Statistic deleted");
+      },
+      onError: (error) => {
+        toast.error((error as Error).message || "Failed to delete stat");
+      },
+    });
   };
 
   return (
@@ -309,7 +291,7 @@ function DeleteStatButton({
       variant="ghost"
       size="sm"
       onClick={handleDelete}
-      disabled={deleting}
+      disabled={deleteMutation.isPending}
       className="text-red-600 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
     >
       <HugeiconsIcon icon={Delete01Icon} size={12} color="currentColor" />

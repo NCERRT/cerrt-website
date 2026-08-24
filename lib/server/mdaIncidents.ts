@@ -15,31 +15,62 @@ export interface MdaIncidentReportInput {
   contactPhone?: string;
 }
 
-/**
- * Retrieves incident reports linked to the authenticated MDA organization.
- */
-export async function getMdaIncidents() {
-  const session = await requireMdaSession();
+export interface GetMdaIncidentsParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+}
 
-  return prisma.incidentReport.findMany({
-    where: {
-      OR: [
-        { mdaOrganizationId: session.organizationId },
-        {
-          contactEmail: {
-            endsWith: session.verifiedDomains[0] ? `@${session.verifiedDomains[0]}` : undefined,
-            mode: "insensitive",
-          },
+export async function getMdaIncidents(params: GetMdaIncidentsParams = {}) {
+  const session = await requireMdaSession();
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 15;
+  const skip = (page - 1) * pageSize;
+
+  const baseWhere: Record<string, unknown> = {
+    OR: [
+      { mdaOrganizationId: session.organizationId },
+      {
+        contactEmail: {
+          endsWith: session.verifiedDomains[0] ? `@${session.verifiedDomains[0]}` : undefined,
+          mode: "insensitive",
         },
-      ],
-    },
-    include: {
-      caseCommunications: {
-        orderBy: { createdAt: "asc" },
       },
-    },
-    orderBy: { submittedAt: "desc" },
-  });
+    ],
+  };
+
+  const andConditions: Record<string, unknown>[] = [];
+
+  if (params.status && params.status !== "ALL") {
+    andConditions.push({ status: params.status });
+  }
+
+  if (params.search && params.search.trim()) {
+    const q = params.search.trim();
+    andConditions.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { thehiveCaseId: { contains: q, mode: "insensitive" } },
+        { type: { contains: q, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  const where = andConditions.length > 0 ? { ...baseWhere, AND: andConditions } : baseWhere;
+
+  const [incidents, totalCount] = await Promise.all([
+    prisma.incidentReport.findMany({
+      where,
+      orderBy: { submittedAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.incidentReport.count({ where }),
+  ]);
+
+  return { incidents, totalCount };
 }
 
 /**
@@ -174,22 +205,38 @@ export async function postMdaCaseCommunication(
   return communication;
 }
 
-/**
- * Summary statistics for MDA dashboard.
- */
 export async function getMdaDashboardStats() {
-  const incidents = await getMdaIncidents();
+  const session = await requireMdaSession();
 
-  const total = incidents.length;
-  const newCount = incidents.filter((i) => i.status === "new").length;
-  const reviewingCount = incidents.filter((i) => i.status === "reviewing").length;
-  const resolvedCount = incidents.filter((i) => i.status === "resolved").length;
+  const where: Record<string, unknown> = {
+    OR: [
+      { mdaOrganizationId: session.organizationId },
+      {
+        contactEmail: {
+          endsWith: session.verifiedDomains[0] ? `@${session.verifiedDomains[0]}` : undefined,
+          mode: "insensitive",
+        },
+      },
+    ],
+  };
+
+  const [total, newCount, reviewingCount, resolvedCount, recentIncidents] = await Promise.all([
+    prisma.incidentReport.count({ where }),
+    prisma.incidentReport.count({ where: { ...where, status: "new" } }),
+    prisma.incidentReport.count({ where: { ...where, status: "reviewing" } }),
+    prisma.incidentReport.count({ where: { ...where, status: "resolved" } }),
+    prisma.incidentReport.findMany({
+      where,
+      orderBy: { submittedAt: "desc" },
+      take: 5,
+    }),
+  ]);
 
   return {
     total,
     newCount,
     reviewingCount,
     resolvedCount,
-    recentIncidents: incidents.slice(0, 5),
+    recentIncidents,
   };
 }

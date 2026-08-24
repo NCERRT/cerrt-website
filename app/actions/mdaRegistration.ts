@@ -64,14 +64,14 @@ export async function submitMdaRegistrationAction(
 }
 
 /**
- * Retrieves list of MDA registration applications for CERRT admin approval queue.
+ * Retrieves list of MDA registration applications for CERRT admin approval queue with pagination and search.
  */
 export async function getMdaRegistrationsAction(
-  statusFilter?: "pending" | "approved" | "rejected",
+  params: Parameters<typeof getMdaRegistrations>[0] = {},
 ): Promise<ActionResult<Awaited<ReturnType<typeof getMdaRegistrations>>>> {
   try {
     await requireSuperadmin();
-    const data = await getMdaRegistrations(statusFilter);
+    const data = await getMdaRegistrations(params);
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to load registrations.";
@@ -162,14 +162,14 @@ export async function rejectMdaRegistrationAction(
 }
 
 /**
- * Retrieves all registered MDA Organizations for Superadmin management.
+ * Retrieves all registered MDA Organizations for Superadmin management with pagination and search.
  */
-export async function getMdaOrganizationsAction(): Promise<
-  ActionResult<Awaited<ReturnType<typeof getMdaOrganizations>>>
-> {
+export async function getMdaOrganizationsAction(
+  params: Parameters<typeof getMdaOrganizations>[0] = {},
+): Promise<ActionResult<Awaited<ReturnType<typeof getMdaOrganizations>>>> {
   try {
     await requireSuperadmin();
-    const data = await getMdaOrganizations();
+    const data = await getMdaOrganizations(params);
     return { success: true, data };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to load MDA organizations.";

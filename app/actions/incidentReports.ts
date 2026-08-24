@@ -111,11 +111,16 @@ export async function lookupIncidentTrackingAction(input: {
  * Fetch incident reports (admin only).
  */
 export async function getIncidentReportsAction(
-  status?: IncidentStatus,
-  channel?: SubmissionChannel
+  params: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    status?: IncidentStatus;
+    channel?: SubmissionChannel;
+  } = {}
 ) {
   await requireAuth();
-  return listIncidentReports(status, channel);
+  return listIncidentReports(params);
 }
 
 export async function getIncidentReportByIdAction(id: string) {

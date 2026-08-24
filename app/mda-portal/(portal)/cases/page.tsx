@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -12,92 +12,58 @@ import {
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 
-import { getMdaIncidentsAction } from "@/app/actions/mdaPortal";
-
-interface IncidentRecord {
-  id: string;
-  title: string | null;
-  type: string;
-  description: string;
-  severity: string;
-  status: string;
-  submittedAt: string | Date;
-  thehiveCaseId: string | null;
-  hiveStatus: string | null;
-}
+import { useMdaIncidentsQuery } from "@/hooks/use-mda-incidents";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function MdaCasesPage() {
-  const [incidents, setIncidents] = useState<IncidentRecord[] | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "new" | "reviewing" | "resolved">("all");
+  const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<"ALL" | "new" | "reviewing" | "resolved">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const pageSize = 15;
 
-  const loadData = useCallback(() => {
-    setLoading(true);
-    getMdaIncidentsAction()
-      .then((res) => {
-        if (res.success && res.data) {
-          setIncidents(res.data as unknown as IncidentRecord[]);
-        } else if (!res.success) {
-          setError(res.error);
-        }
-      })
-      .catch(() => setError("Failed to load incident cases."))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const filteredIncidents = incidents?.filter((item) => {
-    const matchesTab = activeTab === "all" ? true : item.status === activeTab;
-    if (!matchesTab) return false;
-
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (item.title && item.title.toLowerCase().includes(q)) ||
-      item.type.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q) ||
-      (item.thehiveCaseId && item.thehiveCaseId.toLowerCase().includes(q))
-    );
+  const { data, isLoading, isError, error } = useMdaIncidentsQuery({
+    page,
+    pageSize,
+    search: searchQuery,
+    status: activeTab,
   });
 
-  const counts = {
-    all: incidents?.length ?? 0,
-    new: incidents?.filter((i) => i.status === "new").length ?? 0,
-    reviewing: incidents?.filter((i) => i.status === "reviewing").length ?? 0,
-    resolved: incidents?.filter((i) => i.status === "resolved").length ?? 0,
+  const incidents = data?.incidents ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handleTabChange = (tab: "ALL" | "new" | "reviewing" | "resolved") => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(1);
   };
 
   const statusCards = [
     {
       label: "All Incidents",
-      tab: "all" as const,
-      count: counts.all,
+      tab: "ALL" as const,
       icon: Alert02Icon,
       iconColor: "text-slate-700 bg-slate-100 border border-slate-200",
     },
     {
       label: "New",
       tab: "new" as const,
-      count: counts.new,
       icon: Clock01Icon,
       iconColor: "text-amber-600 bg-amber-50 border border-amber-200/80",
     },
     {
       label: "Reviewing",
       tab: "reviewing" as const,
-      count: counts.reviewing,
       icon: Clock01Icon,
       iconColor: "text-purple-600 bg-purple-50 border border-purple-200/80",
     },
     {
       label: "Resolved",
       tab: "resolved" as const,
-      count: counts.resolved,
       icon: CheckmarkCircle02Icon,
       iconColor: "text-primary bg-primary/10 border border-primary/20",
     },
@@ -126,9 +92,9 @@ export default function MdaCasesPage() {
         </Link>
       </div>
 
-      {error && (
+      {isError && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm font-medium">
-          {error}
+          {(error as Error)?.message || "Failed to load incident cases."}
         </div>
       )}
 
@@ -141,7 +107,7 @@ export default function MdaCasesPage() {
           return (
             <button
               key={card.tab}
-              onClick={() => setActiveTab(card.tab)}
+              onClick={() => handleTabChange(card.tab)}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer bg-white border ${
                 isSelected
                   ? "border-2 border-slate-900 ring-2 ring-slate-900/5 bg-slate-50/50 shadow-sm"
@@ -152,9 +118,6 @@ export default function MdaCasesPage() {
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${card.iconColor}`}>
                   <HugeiconsIcon icon={Icon} size={18} />
                 </div>
-                <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  {card.count}
-                </span>
               </div>
               <div className="text-xs font-semibold text-slate-700">
                 {card.label}
@@ -174,7 +137,7 @@ export default function MdaCasesPage() {
             type="text"
             placeholder="Search cases by title, type, or SOC ID..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 shadow-xs"
           />
         </div>
@@ -182,12 +145,12 @@ export default function MdaCasesPage() {
 
       {/* Incidents Table */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs">
-        {loading ? (
+        {isLoading ? (
           <div className="p-12 text-center text-gray-500 text-xs">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             Loading agency incidents...
           </div>
-        ) : !filteredIncidents || filteredIncidents.length === 0 ? (
+        ) : incidents.length === 0 ? (
           <div className="p-12 text-center text-gray-500 text-xs">
             <HugeiconsIcon icon={Alert02Icon} size={32} className="mx-auto mb-3 text-gray-400" />
             No incident cases found matching criteria.
@@ -206,7 +169,7 @@ export default function MdaCasesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-800">
-                {filteredIncidents.map((item) => (
+                {incidents.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
                     <td className="px-6 py-4 max-w-sm">
                       <div className="font-bold text-gray-900 text-sm">
@@ -276,6 +239,15 @@ export default function MdaCasesPage() {
             </table>
           </div>
         )}
+
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="cases"
+        />
       </div>
     </div>
   );

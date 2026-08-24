@@ -17,8 +17,7 @@ import {
   Shield01Icon,
 } from "@hugeicons/core-free-icons";
 
-import { getMdaSessionAction, mdaLogoutAction } from "@/app/actions/mdaAuth";
-import type { AuthenticatedMdaUser } from "@/lib/server/mdaAuth";
+import { useMdaSessionQuery, useMdaLogout } from "@/hooks/use-mda-session";
 
 export default function MdaPortalWorkspaceLayout({
   children,
@@ -27,28 +26,26 @@ export default function MdaPortalWorkspaceLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-
-  const [user, setUser] = useState<AuthenticatedMdaUser | null>(null);
-  const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    getMdaSessionAction().then((session) => {
-      if (!session) {
-        router.push("/mda-portal/login");
-      } else {
-        setUser(session);
-        setLoading(false);
-      }
-    });
-  }, [router]);
+  const { data: user = null, isLoading } = useMdaSessionQuery();
+  const logoutMutation = useMdaLogout();
 
-  const handleSignOut = async () => {
-    await mdaLogoutAction();
-    router.push("/mda-portal/login");
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/mda-portal/login");
+    }
+  }, [user, isLoading, router]);
+
+  const handleSignOut = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        router.push("/mda-portal/login");
+      },
+    });
   };
 
-  if (loading || !user) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-3">
@@ -133,10 +130,11 @@ export default function MdaPortalWorkspaceLayout({
         <div className="border-t border-gray-100 pt-4 space-y-3">
           <button
             onClick={handleSignOut}
+            disabled={logoutMutation.isPending}
             className="w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200 text-xs font-semibold transition-all cursor-pointer"
           >
             <HugeiconsIcon icon={Logout01Icon} size={16} />
-            <span>Sign Out</span>
+            <span>{logoutMutation.isPending ? "Signing out..." : "Sign Out"}</span>
           </button>
 
           <div className="text-center text-[10px] text-gray-400 flex items-center justify-center space-x-1">
@@ -197,10 +195,11 @@ export default function MdaPortalWorkspaceLayout({
 
           <button
             onClick={handleSignOut}
+            disabled={logoutMutation.isPending}
             className="w-full mt-2 flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200"
           >
             <HugeiconsIcon icon={Logout01Icon} size={16} />
-            <span>Sign Out</span>
+            <span>{logoutMutation.isPending ? "Signing out..." : "Sign Out"}</span>
           </button>
         </div>
       )}

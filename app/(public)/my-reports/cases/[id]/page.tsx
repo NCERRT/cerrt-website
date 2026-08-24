@@ -16,34 +16,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import {
   getPersonalIncidentDetailAction,
-  PersonalIncidentDetail,
+  type PersonalIncidentDetail,
 } from "@/app/actions/personalAccess";
-
-interface CommunicationItem {
-  id: string;
-  senderType: "analyst" | "mda_poc";
-  messageBody: string;
-  attachments: { key: string; name: string }[] | null;
-  createdAt: Date;
-}
-
-interface IncidentDetail {
-  id: string;
-  ticketId: string | null;
-  thehiveCaseId: string | null;
-  title: string | null;
-  type: string;
-  description: string;
-  contactName: string;
-  contactEmail: string;
-  organization: string;
-  severity: "critical" | "high" | "medium" | "low";
-  status: "new" | "reviewing" | "resolved" | "closed";
-  hiveStatus: string | null;
-  submittedAt: Date;
-  updatedAt: Date | null;
-  caseCommunications: CommunicationItem[];
-}
 
 function getStatusBadge(status: string) {
   switch (status) {

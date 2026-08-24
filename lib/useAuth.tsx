@@ -1,20 +1,14 @@
 "use client";
 
+import { createContext, useContext, ReactNode } from "react";
 import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import {
-  signInAction,
-  signOutAction,
-  getCurrentUserAction,
-  changePasswordAction,
-} from "@/app/actions/auth";
+  useAdminSessionQuery,
+  useAdminSignIn,
+  useAdminSignOut,
+  useAdminChangePassword,
+} from "@/hooks/use-admin-auth";
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   name: string;
@@ -33,45 +27,38 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Resolve the current user from the session cookie on mount
-  useEffect(() => {
-    getCurrentUserAction()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: user = null, isLoading } = useAdminSessionQuery();
+  const signInMutation = useAdminSignIn();
+  const signOutMutation = useAdminSignOut();
+  const changePasswordMutation = useAdminChangePassword();
 
   const signIn = async (email: string, password: string) => {
-    const res = await signInAction(email, password);
+    const res = await signInMutation.mutateAsync({ email, password });
     if (!res.success) {
       throw new Error(res.error);
-    }
-    if (res.data) {
-      setUser(res.data);
     }
   };
 
   const signOut = async () => {
-    await signOutAction();
-    setUser(null);
+    await signOutMutation.mutateAsync();
   };
 
   const changePassword = async (current: string, newPw: string) => {
-    const res = await changePasswordAction(current, newPw);
+    const res = await changePasswordMutation.mutateAsync({ current, newPw });
     if (!res.success) {
       throw new Error(res.error);
-    }
-    if (res.data) {
-      setUser(res.data);
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, signIn, signOut, changePassword }}
+      value={{
+        user: user ?? null,
+        isLoading,
+        signIn,
+        signOut,
+        changePassword,
+      }}
     >
       {children}
     </AuthContext.Provider>

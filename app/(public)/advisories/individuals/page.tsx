@@ -25,8 +25,8 @@ export default function IndividualsAdvisoryPage() {
   );
 
   useEffect(() => {
-    getAdvisoriesAction("individuals")
-      .then(setAdvisories)
+    getAdvisoriesAction({ category: "individuals" })
+      .then((res) => setAdvisories(res.advisories))
       .catch(() => setAdvisories([]));
   }, []);
 

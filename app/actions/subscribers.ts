@@ -8,6 +8,7 @@ import {
   createSubscriber,
   findSubscriberByEmail,
   deleteSubscriber,
+  type ListSubscribersParams,
 } from "@/lib/server/subscribers";
 import { subscribeSchema, formatZodError } from "@/lib/schemas";
 import { logAction } from "@/lib/server/audit";
@@ -40,11 +41,11 @@ export async function subscribeAction(
 }
 
 /**
- * Admin only: list all subscribers.
+ * Admin only: list subscribers with pagination and search.
  */
-export async function getSubscribersAction() {
+export async function getSubscribersAction(params: ListSubscribersParams = {}) {
   await requireAuth();
-  return listSubscribers();
+  return listSubscribers(params);
 }
 
 /**
@@ -62,7 +63,7 @@ export async function deleteSubscriberAction(id: string): Promise<void> {
  */
 export async function exportSubscribersCsvAction(): Promise<string> {
   const me = await requireAuth();
-  const subs = await listSubscribers();
+  const { subscribers: subs } = await listSubscribers({ pageSize: 100000 });
 
   await logAction({
     action: "SUBSCRIBERS_EXPORT",

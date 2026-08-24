@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { subscribeAction } from "@/app/actions/subscribers";
+import { useSubscribeNewsletter } from "@/hooks/use-public";
 
 /**
  * Visual variants for the different contexts the form appears in.
@@ -63,32 +63,37 @@ export default function SubscribeForm({
   const s = STYLES[variant];
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<
-    "idle" | "submitting" | "success" | "error"
+    "idle" | "success" | "error"
   >("idle");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const subscribeMutation = useSubscribeNewsletter();
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus("submitting");
+    setStatus("idle");
     setMessage("");
-    try {
-      const result = await subscribeAction(email);
-      setStatus("success");
-      setMessage(
-        result.alreadySubscribed
-          ? "You're already on the list."
-          : "Thanks — you're subscribed.",
-      );
-      setEmail("");
-    } catch (err) {
-      setStatus("error");
-      setMessage(
-        (err as Error).message || "Something went wrong. Please try again.",
-      );
-    }
+
+    subscribeMutation.mutate(email, {
+      onSuccess: (result) => {
+        setStatus("success");
+        setMessage(
+          result.alreadySubscribed
+            ? "You're already on the list."
+            : "Thanks — you're subscribed.",
+        );
+        setEmail("");
+      },
+      onError: (err) => {
+        setStatus("error");
+        setMessage(
+          (err as Error).message || "Something went wrong. Please try again.",
+        );
+      },
+    });
   };
 
-  const busy = status === "submitting" || status === "success";
+  const busy = subscribeMutation.isPending || status === "success";
 
   return (
     <div>
@@ -104,7 +109,7 @@ export default function SubscribeForm({
           className={s.input}
         />
         <button type="submit" disabled={busy} className={s.button}>
-          {status === "submitting" ? "..." : s.buttonText}
+          {subscribeMutation.isPending ? "..." : s.buttonText}
         </button>
       </form>
       {message && (

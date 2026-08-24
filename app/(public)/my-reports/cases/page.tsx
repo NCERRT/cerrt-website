@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -13,12 +13,10 @@ import {
   CheckmarkCircle02Icon,
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
-import {
-  getPersonalIncidentsAction,
-  personalSignOutAction,
-  PersonalIncidentSummary,
-} from "@/app/actions/personalAccess";
+import { personalSignOutAction } from "@/app/actions/personalAccess";
 import { useRouter } from "next/navigation";
+import { usePersonalIncidentsQuery } from "@/hooks/use-personal-access";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -81,39 +79,33 @@ function formatDate(dateInput: Date | string) {
 
 export default function PersonalIncidentsDashboardPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState<string>("");
-  const [incidents, setIncidents] = useState<PersonalIncidentSummary[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
 
-  useEffect(() => {
-    getPersonalIncidentsAction()
-      .then((res) => {
-        if (!res.success) {
-          setErrorMessage(res.error || "Failed to load incidents.");
-        } else {
-          setEmail(res.verifiedEmail || "");
-          setIncidents(res.incidents || []);
-        }
-      })
-      .catch((err) => {
-        setErrorMessage((err as Error).message || "Failed to load incidents.");
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading, isError, error } = usePersonalIncidentsQuery({
+    page,
+    pageSize,
+  });
+
+  const email = data?.verifiedEmail ?? "";
+  const incidents = data?.incidents ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleSignOut = async () => {
     await personalSignOutAction();
     router.push("/my-reports");
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
+
+  const errorMessage = isError ? (error as Error)?.message : "";
 
   return (
     <main className="min-h-screen bg-gray-50/50 py-12">
@@ -192,7 +184,7 @@ export default function PersonalIncidentsDashboardPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between px-2 mb-2">
               <h2 className="text-lg font-bold text-foreground font-serif">
-                Your Reports ({incidents.length})
+                Your Reports ({totalCount})
               </h2>
             </div>
 
@@ -255,6 +247,15 @@ export default function PersonalIncidentsDashboardPage() {
                 </div>
               );
             })}
+
+            {/* Shared Pagination Component */}
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              onPageChange={setPage}
+              itemLabel="reports"
+            />
           </div>
         )}
       </div>

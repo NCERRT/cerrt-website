@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/useAuth";
 import { useRouter } from "next/navigation";
@@ -24,20 +24,21 @@ import {
   Cancel01Icon,
   CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
+import { type TeamMember } from "@/app/actions/team";
 import {
-  toggleTeamMemberActiveAction,
-  getTeamMembersAction,
-  inviteAdminAction,
-  resendInviteAction,
-  type TeamMember,
-} from "@/app/actions/team";
+  useTeamMembersQuery,
+  useInviteAdmin,
+  useResendInvite,
+  useToggleTeamMemberActive,
+} from "@/hooks/use-team";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 export default function TeamPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [members, setMembers] = useState<TeamMember[] | null>(null);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  const { data: members = null, isLoading: isMembersLoading } = useTeamMembersQuery();
 
   // Superadmin-only page. Redirect regular admins away.
   useEffect(() => {
@@ -45,19 +46,6 @@ export default function TeamPage() {
       router.push("/cerrt-ops");
     }
   }, [user, isLoading, router]);
-
-  const loadData = useCallback(() => {
-    getTeamMembersAction()
-      .then(setMembers)
-      .catch((err) => {
-        setMembers([]);
-        toast.error((err as Error).message || "Failed to load team");
-      });
-  }, []);
-
-  useEffect(() => {
-    if (user?.role === "superadmin") loadData();
-  }, [user, loadData]);
 
   const formatDate = (date: Date) =>
     new Intl.DateTimeFormat("en-NG", {
@@ -94,7 +82,6 @@ export default function TeamPage() {
             <InviteForm
               onSuccess={() => {
                 setIsInviteOpen(false);
-                loadData();
               }}
             />
           </DialogContent>
@@ -145,7 +132,7 @@ export default function TeamPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {members === null ? (
+              {isMembersLoading ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -154,7 +141,7 @@ export default function TeamPage() {
                     Loading...
                   </td>
                 </tr>
-              ) : members.length === 0 ? (
+              ) : !members || members.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -194,13 +181,11 @@ export default function TeamPage() {
                       {(m.status === "pending" || m.status === "expired") && (
                         <ResendButton userId={m.id} email={m.email} />
                       )}
-                      {/* Self-deactivation is disabled check is in the button/action */}
                       {!m.isSelf && (
                         <ToggleActiveButton
                           id={m.id}
                           email={m.email}
                           status={m.status}
-                          onUpdated={loadData}
                         />
                       )}
                     </td>
@@ -244,24 +229,26 @@ function StatusBadge({ status }: { status: TeamMember["status"] }) {
 function InviteForm({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
+  const inviteMutation = useInviteAdmin();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    try {
-      const res = await inviteAdminAction({ email, name });
-      if (!res.success) {
-        toast.error(res.error);
-        return;
-      }
-      toast.success(`Invite sent to ${email.trim().toLowerCase()}`);
-      onSuccess();
-    } catch (err) {
-      toast.error((err as Error).message || "Failed to send invite");
-    } finally {
-      setSaving(false);
-    }
+    inviteMutation.mutate(
+      { email, name },
+      {
+        onSuccess: (res) => {
+          if (!res.success) {
+            toast.error(res.error);
+            return;
+          }
+          toast.success(`Invite sent to ${email.trim().toLowerCase()}`);
+          onSuccess();
+        },
+        onError: (err) => {
+          toast.error((err as Error).message || "Failed to send invite");
+        },
+      },
+    );
   };
 
   return (
@@ -307,12 +294,12 @@ function InviteForm({ onSuccess }: { onSuccess: () => void }) {
           type="button"
           variant="outline"
           onClick={onSuccess}
-          disabled={saving}
+          disabled={inviteMutation.isPending}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Sending..." : "Send invite"}
+        <Button type="submit" disabled={inviteMutation.isPending}>
+          {inviteMutation.isPending ? "Sending..." : "Send invite"}
         </Button>
       </DialogFooter>
     </form>
@@ -320,22 +307,21 @@ function InviteForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 function ResendButton({ userId, email }: { userId: string; email: string }) {
-  const [sending, setSending] = useState(false);
+  const resendMutation = useResendInvite();
 
-  const handleResend = async () => {
-    setSending(true);
-    try {
-      const res = await resendInviteAction(userId);
-      if (!res.success) {
-        toast.error(res.error);
-        return;
-      }
-      toast.success(`Invite resent to ${email}`);
-    } catch (err) {
-      toast.error((err as Error).message || "Failed to resend invite");
-    } finally {
-      setSending(false);
-    }
+  const handleResend = () => {
+    resendMutation.mutate(userId, {
+      onSuccess: (res) => {
+        if (!res.success) {
+          toast.error(res.error);
+          return;
+        }
+        toast.success(`Invite resent to ${email}`);
+      },
+      onError: (err) => {
+        toast.error((err as Error).message || "Failed to resend invite");
+      },
+    });
   };
 
   return (
@@ -343,11 +329,11 @@ function ResendButton({ userId, email }: { userId: string; email: string }) {
       variant="outline"
       size="sm"
       onClick={handleResend}
-      disabled={sending}
+      disabled={resendMutation.isPending}
       className="gap-2"
     >
       <HugeiconsIcon icon={MailSend01Icon} size={14} color="currentColor" />
-      {sending ? "Sending..." : "Resend"}
+      {resendMutation.isPending ? "Sending..." : "Resend"}
     </Button>
   );
 }
@@ -356,16 +342,13 @@ function ToggleActiveButton({
   id,
   email,
   status,
-  onUpdated,
 }: {
   id: string;
   email: string;
   status: TeamMember["status"];
-  onUpdated: () => void;
 }) {
-  const [loading, setLoading] = useState(false);
   const confirm = useConfirm();
-
+  const toggleMutation = useToggleTeamMemberActive();
   const isDeactivated = status === "deactivated";
 
   const handleToggle = async () => {
@@ -378,20 +361,18 @@ function ToggleActiveButton({
       });
       if (!ok) return;
 
-      setLoading(true);
-      try {
-        const res = await toggleTeamMemberActiveAction(id);
-        if (!res.success) {
-          toast.error(res.error);
-          return;
-        }
-        toast.success("Team member reactivated");
-        onUpdated();
-      } catch (err) {
-        toast.error((err as Error).message || "Failed to reactivate team member");
-      } finally {
-        setLoading(false);
-      }
+      toggleMutation.mutate(id, {
+        onSuccess: (res) => {
+          if (!res.success) {
+            toast.error(res.error);
+            return;
+          }
+          toast.success("Team member reactivated");
+        },
+        onError: (err) => {
+          toast.error((err as Error).message || "Failed to reactivate team member");
+        },
+      });
     } else {
       const ok = await confirm({
         title: "Deactivate CERRT admin?",
@@ -401,20 +382,18 @@ function ToggleActiveButton({
       });
       if (!ok) return;
 
-      setLoading(true);
-      try {
-        const res = await toggleTeamMemberActiveAction(id);
-        if (!res.success) {
-          toast.error(res.error);
-          return;
-        }
-        toast.success("Team member deactivated");
-        onUpdated();
-      } catch (err) {
-        toast.error((err as Error).message || "Failed to deactivate team member");
-      } finally {
-        setLoading(false);
-      }
+      toggleMutation.mutate(id, {
+        onSuccess: (res) => {
+          if (!res.success) {
+            toast.error(res.error);
+            return;
+          }
+          toast.success("Team member deactivated");
+        },
+        onError: (err) => {
+          toast.error((err as Error).message || "Failed to deactivate team member");
+        },
+      });
     }
   };
 
@@ -423,7 +402,7 @@ function ToggleActiveButton({
       variant="ghost"
       size="sm"
       onClick={handleToggle}
-      disabled={loading}
+      disabled={toggleMutation.isPending}
       className={
         isDeactivated
           ? "text-green-600 hover:text-green-700 hover:bg-green-50"

@@ -6,17 +6,52 @@ import type { IncidentStatus, Severity, SubmissionChannel } from "@prisma/client
  * Data-access layer for incident reports.
  */
 
-export function listIncidentReports(
-  status?: IncidentStatus,
-  submissionChannel?: SubmissionChannel
-) {
-  return prisma.incidentReport.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(submissionChannel ? { submissionChannel } : {}),
-    },
-    orderBy: { submittedAt: "desc" },
-  });
+export interface ListIncidentReportsParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: IncidentStatus;
+  submissionChannel?: SubmissionChannel;
+}
+
+export async function listIncidentReports(params: ListIncidentReportsParams = {}) {
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 15;
+  const skip = (page - 1) * pageSize;
+
+  const where: Record<string, unknown> = {};
+
+  if (params.status) {
+    where.status = params.status;
+  }
+
+  if (params.submissionChannel) {
+    where.submissionChannel = params.submissionChannel;
+  }
+
+  if (params.search && params.search.trim()) {
+    const q = params.search.trim();
+    where.OR = [
+      { title: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+      { contactName: { contains: q, mode: "insensitive" } },
+      { contactEmail: { contains: q, mode: "insensitive" } },
+      { organization: { contains: q, mode: "insensitive" } },
+      { thehiveCaseId: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
+  const [reports, totalCount] = await Promise.all([
+    prisma.incidentReport.findMany({
+      where,
+      orderBy: { submittedAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.incidentReport.count({ where }),
+  ]);
+
+  return { reports, totalCount };
 }
 
 export function getIncidentReportById(id: string) {

@@ -11,6 +11,7 @@ import {
   getAdvisoryByAdvisoryId,
   getAdvisoryBySlug,
   listAdvisories,
+  type ListAdvisoriesParams,
 } from "@/lib/server/advisories";
 import { deleteFile, getDownloadUrl } from "@/lib/server/storage";
 import { advisorySchema, formatZodError, type AdvisoryInput } from "@/lib/schemas";
@@ -68,14 +69,14 @@ function slugify(text: string): string {
 }
 
 /**
- * Fetch advisories (optionally filtered by category) with presigned file URLs.
+ * Fetch advisories with pagination and presigned file URLs.
  */
 export async function getAdvisoriesAction(
-  category?: AdvisoryCategory,
-): Promise<AdvisoryDetailWithUrls[]> {
-  const advisories = await listAdvisories(category);
+  params: ListAdvisoriesParams = {},
+): Promise<{ advisories: AdvisoryDetailWithUrls[]; totalCount: number }> {
+  const { advisories, totalCount } = await listAdvisories(params);
 
-  return Promise.all(
+  const items = await Promise.all(
     advisories.map(async (a) => ({
       ...a,
       fileUrl: a.fileKey ? await getDownloadUrl(a.fileKey, a.fileName || undefined) : null,
@@ -86,7 +87,12 @@ export async function getAdvisoriesAction(
         })) || []
       ),
     }))
-  ) as unknown as AdvisoryDetailWithUrls[];
+  );
+
+  return {
+    advisories: items as unknown as AdvisoryDetailWithUrls[],
+    totalCount,
+  };
 }
 
 export async function getAdvisoryBySlugAction(

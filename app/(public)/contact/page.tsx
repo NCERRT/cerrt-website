@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { contactFormSchema, formatZodError } from "@/lib/schemas";
-import { submitContactAction } from "@/app/actions/contactSubmissions";
+import { useSubmitContact } from "@/hooks/use-public";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Call02Icon,
@@ -33,11 +33,13 @@ export default function ContactPage() {
     incidentType: "general" as InquiryType,
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const submitContactMutation = useSubmitContact();
+  const isSubmitting = submitContactMutation.isPending;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -48,7 +50,7 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
     setSubmitStatus("idle");
@@ -70,10 +72,8 @@ export default function ContactPage() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      await submitContactAction({
+    submitContactMutation.mutate(
+      {
         inquiryType: parseResult.data.inquiryType,
         name: parseResult.data.name,
         email: parseResult.data.email,
@@ -81,25 +81,27 @@ export default function ContactPage() {
         organization: parseResult.data.organization || undefined,
         subject: parseResult.data.subject,
         message: parseResult.data.message,
-      });
-
-      setSubmitStatus("success");
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        organization: "",
-        subject: "",
-        message: "",
-        incidentType: "general",
-      });
-    } catch (error) {
-      const err = error as Error;
-      setErrorMessage(err.message || "Failed to send message");
-      setSubmitStatus("error");
-    } finally {
-      setIsSubmitting(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          setSubmitStatus("success");
+          setFormData({
+            name: "",
+            email: "",
+            phone: "",
+            organization: "",
+            subject: "",
+            message: "",
+            incidentType: "general",
+          });
+        },
+        onError: (error) => {
+          const err = error as Error;
+          setErrorMessage(err.message || "Failed to send message");
+          setSubmitStatus("error");
+        },
+      },
+    );
   };
 
   return (

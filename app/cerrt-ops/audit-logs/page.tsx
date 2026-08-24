@@ -1,19 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/useAuth";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Task01Icon,
-  Search01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-} from "@hugeicons/core-free-icons";
-import { getAuditLogsAction, type AuditLogItem } from "@/app/actions/audit";
+import { Task01Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { useAuditLogsQuery } from "@/hooks/use-audit-logs";
+import { TablePagination } from "@/components/ui/table-pagination";
 import {
   Select,
   SelectContent,
@@ -26,13 +20,9 @@ export default function AuditLogsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  const [logs, setLogs] = useState<AuditLogItem[] | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [actionType, setActionType] = useState("ALL");
-  const [loadingData, setLoadingData] = useState(false);
-
   const pageSize = 15;
 
   // Superadmin-only page. Redirect regular admins away.
@@ -42,33 +32,16 @@ export default function AuditLogsPage() {
     }
   }, [user, isLoading, router]);
 
-  const loadData = useCallback(() => {
-    setLoadingData(true);
-    getAuditLogsAction({
-      page,
-      pageSize,
-      search,
-      actionType,
-    })
-      .then((res) => {
-        setLogs(res.logs);
-        setTotalCount(res.totalCount);
-      })
-      .catch((err) => {
-        setLogs([]);
-        toast.error((err as Error).message || "Failed to load audit logs");
-      })
-      .finally(() => {
-        setLoadingData(false);
-      });
-  }, [page, search, actionType]);
+  const { data, isLoading: loadingData, isError, error } = useAuditLogsQuery({
+    page,
+    pageSize,
+    search,
+    actionType,
+  });
 
-  useEffect(() => {
-    if (user?.role === "superadmin") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadData();
-    }
-  }, [user, loadData]);
+  const logs = data?.logs ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   // Handle filter changes (reset to page 1)
   const handleFilterChange = (newType: string) => {
@@ -90,8 +63,6 @@ export default function AuditLogsPage() {
       minute: "2-digit",
       second: "2-digit",
     }).format(new Date(date));
-
-  const totalPages = Math.ceil(totalCount / pageSize);
 
   if (isLoading || !user || user.role !== "superadmin") {
     return null;
@@ -170,7 +141,7 @@ export default function AuditLogsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border-2 border-gray-200">
+      <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
@@ -193,13 +164,22 @@ export default function AuditLogsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {logs === null || loadingData ? (
+              {loadingData ? (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-6 py-12 text-center text-gray-500 text-sm"
                   >
                     Loading audit trail...
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-red-600 text-sm"
+                  >
+                    {(error as Error)?.message || "Failed to load audit logs."}
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
@@ -249,41 +229,14 @@ export default function AuditLogsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center p-4 border-t-2 border-gray-200 flex-wrap gap-3">
-            <span className="text-sm text-gray-600">
-              Showing page{" "}
-              <strong className="font-semibold text-gray-900">{page}</strong> of{" "}
-              <strong className="font-semibold text-gray-900">
-                {totalPages}
-              </strong>{" "}
-              ({totalCount} total logs)
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="flex items-center gap-1"
-              >
-                <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="flex items-center gap-1"
-              >
-                Next
-                <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Shared Pagination Component */}
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          itemLabel="logs"
+        />
       </div>
     </div>
   );

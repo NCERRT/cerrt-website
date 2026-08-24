@@ -52,6 +52,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.14)(react@19.2.4)
+      '@tanstack/react-query':
+        specifier: ^5.102.2
+        version: 5.102.2(react@19.2.4)
       '@upstash/redis':
         specifier: ^1.38.0
         version: 1.38.0
@@ -1317,6 +1320,14 @@ packages:
 
   '@tailwindcss/postcss@4.2.2':
     resolution: {integrity: sha512-n4goKQbW8RVXIbNKRB/45LzyUqN451deQK0nzIeauVEqjlI49slUlgKYJM2QyUzap/PcpnS7kzSUmPb1sCRvYQ==}
+
+  '@tanstack/query-core@5.102.2':
+    resolution: {integrity: sha512-zQ5794PXBlV5Wl7N23SR1/Ss+wPE/h2Ye4XlKpm3omN8i8b/Fd4DAdqpLS2AXj5M/RMObt3k5qy3E7kzt/AvBA==}
+
+  '@tanstack/react-query@5.102.2':
+    resolution: {integrity: sha512-KxU8ZyOEuJ81eTSgXa8GQbk/jO/rz0elYtNKt3VMtM2pRjeO8ADIu7sqqmEjFKJKqco9h2N1ojIDuHs6VfDItQ==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -4457,6 +4468,13 @@ snapshots:
       '@tailwindcss/oxide': 4.2.2
       postcss: 8.5.26
       tailwindcss: 4.2.2
+
+  '@tanstack/query-core@5.102.2': {}
+
+  '@tanstack/react-query@5.102.2(react@19.2.4)':
+    dependencies:
+      '@tanstack/query-core': 5.102.2
+      react: 19.2.4
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
