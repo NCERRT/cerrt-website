@@ -3,12 +3,18 @@ import type { NextRequest } from "next/server";
 
 const SESSION_COOKIE = "sessionId";
 const PERSONAL_SESSION_COOKIE = "personalSessionId";
+const MDA_SESSION_COOKIE = "mdaSessionId";
 
 // Public auth routes that unauthenticated users need access to
 const PUBLIC_ADMIN_ROUTES = [
   "/cerrt-ops/login",
   "/cerrt-ops/forgot-password",
   "/cerrt-ops/reset-password",
+];
+
+const PUBLIC_MDA_ROUTES = [
+  "/mda-portal/login",
+  "/mda-portal/register",
 ];
 
 export function proxy(request: NextRequest) {
@@ -52,6 +58,19 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // 4. Protect /mda-portal routes (except /login and /register)
+  if (pathname === "/mda-portal" || pathname.startsWith("/mda-portal/")) {
+    if (PUBLIC_MDA_ROUTES.some((route) => pathname.startsWith(route))) {
+      return NextResponse.next();
+    }
+
+    const hasMdaSession = request.cookies.has(MDA_SESSION_COOKIE);
+    if (!hasMdaSession) {
+      const loginUrl = new URL("/mda-portal/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -63,5 +82,7 @@ export const config = {
     "/cerrt-ops",
     "/my-reports/cases/:path*",
     "/my-reports/cases",
+    "/mda-portal/:path*",
+    "/mda-portal",
   ],
 };

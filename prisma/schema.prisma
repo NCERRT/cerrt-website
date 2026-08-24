@@ -70,6 +70,12 @@ enum SubmissionChannel {
   api
 }
 
+enum MdaRegistrationStatus {
+  pending
+  approved
+  rejected
+}
+
 // ============================================================
 // Models
 // ============================================================
@@ -195,9 +201,11 @@ model IncidentReport {
   hiveSeverity      String?
   submissionChannel SubmissionChannel @default(web)
   emailMessageId    String?           @unique
+  mdaOrganizationId String?
   updatedAt         DateTime?         @updatedAt
 
-  reviewedBy User? @relation(fields: [reviewedById], references: [id])
+  reviewedBy      User?            @relation(fields: [reviewedById], references: [id])
+  mdaOrganization MdaOrganization? @relation(fields: [mdaOrganizationId], references: [id])
 
   secureTokens       SecureToken[]
   caseCommunications CaseCommunication[]
@@ -205,6 +213,7 @@ model IncidentReport {
   @@index([status])
   @@index([submittedAt])
   @@index([submissionChannel])
+  @@index([mdaOrganizationId])
   @@map("incident_reports")
 }
 
@@ -233,12 +242,14 @@ model CaseCommunication {
   attachmentKey  String?
   attachmentName String?
   attachments    Json?      // [{ key: string, name: string }]
+  isSyncedToHive Boolean    @default(false)
   createdAt      DateTime   @default(now())
 
   incidentReport IncidentReport @relation(fields: [cerrtCaseId], references: [id], onDelete: Cascade)
 
   @@index([cerrtCaseId])
   @@index([createdAt])
+  @@index([isSyncedToHive])
   @@map("case_communications")
 }
 
@@ -335,3 +346,79 @@ model EmailOtp {
   @@index([otpHash])
   @@map("email_otps")
 }
+
+// ============================================================
+// MDA Portal Models
+// ============================================================
+
+model MdaRegistration {
+  id               String                  @id @default(cuid())
+  organizationName String
+  acronym          String?
+  sector           String?
+  contactName      String
+  contactEmail     String                  // unique per email
+  jobTitle         String
+  phone            String?
+  passwordHash     String                  // bcrypt hash (copied to MdaAccount on approval)
+  emailDomain      String                  // e.g. "moj.zamfara.gov.ng"
+  status           MdaRegistrationStatus   @default(pending)
+  reviewedById     String?                 // CERRT admin who reviewed
+  reviewNote       String?                 // reason for rejection
+  reviewedAt       DateTime?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@unique([contactEmail])
+  @@index([status])
+  @@index([emailDomain])
+  @@map("mda_registrations")
+}
+
+model MdaOrganization {
+  id              String   @id @default(cuid())
+  name            String
+  acronym         String?
+  sector          String?
+  verifiedDomains String[]                 // ["moj.zamfara.gov.ng", "zamfara.gov.ng"]
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  account         MdaAccount?              // exactly 1 account per org
+  incidentReports IncidentReport[]
+
+  @@map("mda_organizations")
+}
+
+model MdaAccount {
+  id                  String          @id @default(cuid())
+  email               String          @unique
+  contactName         String
+  jobTitle            String?
+  phone               String?
+  passwordHash        String
+  mustChangePassword  Boolean         @default(false)
+  isActive            Boolean         @default(true)
+  mdaOrganizationId   String          @unique    // enforces 1:1 relationship
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  mdaOrganization MdaOrganization @relation(fields: [mdaOrganizationId], references: [id])
+  sessions        MdaSession[]
+
+  @@map("mda_accounts")
+}
+
+model MdaSession {
+  id           String   @id @default(cuid())
+  mdaAccountId String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  mdaAccount MdaAccount @relation(fields: [mdaAccountId], references: [id], onDelete: Cascade)
+
+  @@index([mdaAccountId])
+  @@map("mda_sessions")
+}
+

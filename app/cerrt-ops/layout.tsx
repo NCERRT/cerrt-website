@@ -17,6 +17,8 @@ import {
   MailAtSign02Icon,
   UserGroupIcon,
   Task01Icon,
+  Building02Icon,
+  Building01Icon,
   ChatUserIcon,
 } from "@hugeicons/core-free-icons";
 
@@ -183,6 +185,16 @@ function AdminDashboard({
     // Team management is superadmin-only
     ...(userRole === "superadmin"
       ? [
+          {
+            href: "/cerrt-ops/mda-registrations",
+            label: "MDA Registrations",
+            icon: Building02Icon,
+          },
+          {
+            href: "/cerrt-ops/organizations",
+            label: "MDA Directory",
+            icon: Building01Icon,
+          },
           {
             href: "/cerrt-ops/team",
             label: "Team",

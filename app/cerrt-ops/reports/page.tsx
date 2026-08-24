@@ -57,40 +57,35 @@ export default function ReportsPage() {
       value: undefined,
       count: stats?.total || 0,
       icon: Alert02Icon,
-      bgClass: "bg-gray-50 text-gray-600 border border-gray-200",
-      activeBgClass: "bg-gray-600 text-white",
+      iconColor: "text-slate-700 bg-slate-100 border border-slate-200",
     },
     {
       label: "New",
       value: "new",
       count: stats?.new || 0,
       icon: Alert02Icon,
-      bgClass: "bg-red-50 text-red-600 border border-red-100",
-      activeBgClass: "bg-red-600 text-white",
+      iconColor: "text-red-600 bg-red-50 border border-red-200/80",
     },
     {
       label: "Reviewing",
       value: "reviewing",
       count: stats?.reviewing || 0,
       icon: Clock01Icon,
-      bgClass: "bg-amber-50 text-amber-600 border border-amber-100",
-      activeBgClass: "bg-amber-600 text-white",
+      iconColor: "text-amber-600 bg-amber-50 border border-amber-200/80",
     },
     {
       label: "Resolved",
       value: "resolved",
       count: stats?.resolved || 0,
       icon: CheckmarkCircle02Icon,
-      bgClass: "bg-green-50 text-green-600 border border-green-100",
-      activeBgClass: "bg-green-600 text-white",
+      iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/80",
     },
     {
       label: "Closed",
       value: "closed",
       count: stats?.closed || 0,
       icon: CheckmarkCircle02Icon,
-      bgClass: "bg-gray-50 text-gray-500 border border-gray-200",
-      activeBgClass: "bg-gray-500 text-white",
+      iconColor: "text-slate-500 bg-slate-50 border border-slate-200",
     },
   ];
 
@@ -176,33 +171,23 @@ export default function ReportsPage() {
             <button
               key={filter.label}
               onClick={() => setStatusFilter(filter.value as IncidentStatus)}
-              className={`p-4 rounded-[14px] transition-all text-left group cursor-pointer ${
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer bg-white border ${
                 isSelected
-                  ? filter.activeBgClass
-                  : "bg-white hover:bg-gray-50 border border-gray-200"
+                  ? "border-2 border-slate-900 ring-2 ring-slate-900/5 bg-slate-50/50 shadow-sm"
+                  : "border-slate-200 hover:border-slate-300 shadow-xs"
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    isSelected ? "bg-white/20 text-white" : filter.bgClass
-                  }`}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${filter.iconColor}`}
                 >
                   <HugeiconsIcon icon={Icon} size={16} />
                 </div>
-                <span
-                  className={`text-xl font-bold ${
-                    isSelected ? "text-white" : "text-gray-900"
-                  }`}
-                >
+                <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {filter.count}
                 </span>
               </div>
-              <div
-                className={`text-sm font-semibold ${
-                  isSelected ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <div className="text-xs font-semibold text-slate-700">
                 {filter.label}
               </div>
             </button>

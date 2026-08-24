@@ -223,3 +223,89 @@ export async function sendOtpEmail(to: string, otpCode: string): Promise<void> {
     html: layout(body),
   });
 }
+
+/**
+ * Sends an email confirming MDA Portal registration approval.
+ *
+ * @param to               - MDA contact email address
+ * @param contactName      - MDA contact display name
+ * @param organizationName - Approved organization name
+ */
+export async function sendMdaApprovalEmail(
+  to: string,
+  contactName: string,
+  organizationName: string,
+): Promise<void> {
+  const loginUrl = `${APP_URL}/mda-portal/login`;
+
+  const body = `
+    <p style="margin:0 0 16px;">Dear <strong>${contactName}</strong>,</p>
+
+    <p style="margin:0 0 16px;">
+      We are pleased to inform you that your registration for the <strong>CERRT MDA Portal</strong> on behalf of <strong>${organizationName}</strong> has been <strong>approved</strong> by the CERRT Administration.
+    </p>
+
+    <p style="margin:0 0 24px;text-align:center;">
+      <a href="${loginUrl}"
+         style="display:inline-block;background-color:#1a365d;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:6px;font-weight:600;font-size:15px;">
+        Access MDA Portal Login
+      </a>
+    </p>
+
+    <p style="margin:0 0 8px;font-size:13px;color:#718096;">
+      You can now log in using the email address and password you specified during registration.
+    </p>`;
+
+  await transporter.sendMail({
+    from: `CERRT Admin <${EMAIL_USER}>`,
+    to,
+    subject: "CERRT MDA Portal — Registration Approved",
+    html: layout(body),
+  });
+}
+
+/**
+ * Sends an email notifying an MDA applicant of registration rejection.
+ *
+ * @param to               - MDA contact email address
+ * @param contactName      - MDA contact display name
+ * @param organizationName - Organization name
+ * @param reason           - Reason for rejection
+ */
+export async function sendMdaRejectionEmail(
+  to: string,
+  contactName: string,
+  organizationName: string,
+  reason: string,
+): Promise<void> {
+  const body = `
+    <p style="margin:0 0 16px;">Dear <strong>${contactName}</strong>,</p>
+
+    <p style="margin:0 0 16px;">
+      Thank you for your interest in registering <strong>${organizationName}</strong> on the CERRT MDA Portal.
+    </p>
+
+    <p style="margin:0 0 16px;">
+      After review by the CERRT Administration, your registration application could not be approved at this time for the following reason:
+    </p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      <tr>
+        <td style="background-color:#fff5f5;border-left:4px solid #e53e3e;padding:16px 20px;border-radius:4px;color:#9b2c2c;">
+          <strong>Reason for Rejection:</strong><br />
+          ${reason}
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 8px;font-size:13px;color:#718096;">
+      You may resubmit your application after <strong>72 hours</strong> with updated information. If you have questions, please contact CERRT support.
+    </p>`;
+
+  await transporter.sendMail({
+    from: `CERRT Admin <${EMAIL_USER}>`,
+    to,
+    subject: "CERRT MDA Portal — Registration Update",
+    html: layout(body),
+  });
+}

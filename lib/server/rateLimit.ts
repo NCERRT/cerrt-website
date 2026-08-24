@@ -67,6 +67,11 @@ const RATE_LIMITS = {
     windowSec: 15 * 60, // 15 minutes
     message: "Too many failed verification attempts. Please wait 15 minutes before trying again.",
   },
+  mda_login: {
+    maxAttempts: 5,
+    windowSec: 15 * 60, // 15 minutes
+    message: "Too many MDA login attempts. Please try again in 15 minutes.",
+  },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;
